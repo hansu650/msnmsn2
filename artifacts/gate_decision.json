@@ -1,0 +1,66 @@
+{
+  "verdict": "ABANDON",
+  "conditions": {
+    "controlled_support_improvement": {
+      "passed": false,
+      "available": true,
+      "yield_passed": true,
+      "pair_counts_by_seed": {
+        "2024": 936,
+        "2025": 940,
+        "2026": 932
+      },
+      "minimum_pairs_per_seed": 100,
+      "apn_mse": 0.24978106689832513,
+      "full_mse": 0.25008057919073284,
+      "relative_improvement": -0.0011990992597114224,
+      "threshold": 0.05
+    },
+    "full_beats_raw_macro": {
+      "passed": false,
+      "estimate_full_minus_raw": 0.00038183294173435535,
+      "ci_low": -0.0005168822453558057,
+      "ci_high": 0.0013171954959849204
+    },
+    "full_beats_shuffled_evidence": {
+      "passed": false,
+      "estimate_full_minus_control": 0.0013240521502780507,
+      "ci_low": 0.0003639477934944053,
+      "ci_high": 0.002354498689587706
+    },
+    "full_beats_random_features": {
+      "passed": false,
+      "estimate_full_minus_control": 0.001189429839692867,
+      "ci_low": -6.72856041433795e-05,
+      "ci_high": 0.0025224379887007296
+    },
+    "native_mse_regression": {
+      "passed": true,
+      "relative_regression": 0.0036084911181475774,
+      "maximum": 0.01,
+      "apn_mse": 0.3123311996459961,
+      "full_mse": 0.31345824400583905
+    },
+    "parameter_overhead": {
+      "passed": true,
+      "relative_overhead": 0.01074466497537681,
+      "maximum": 0.05,
+      "apn_parameter_count": 6701.0,
+      "full_parameter_count": 6773.0
+    },
+    "time_overhead": {
+      "passed": true,
+      "available": true,
+      "measured_steps_valid": true,
+      "apn_step_mean_ms": 5.592,
+      "full_step_mean_ms": 5.767,
+      "relative_overhead": 0.031294706723891404,
+      "maximum": 0.05,
+      "source": "C:\\Users\\qintian\\Desktop\\msn2\\artifacts\\timing_100_steps.json"
+    }
+  },
+  "all_mandatory_conditions_passed": false,
+  "controlled_support_path": "C:\\Users\\qintian\\Desktop\\msn2\\artifacts\\controlled_support_errors.csv",
+  "timing_path": "C:\\Users\\qintian\\Desktop\\msn2\\artifacts\\timing_100_steps.json",
+  "decided_at": "2026-07-20T20:15:46.083952+00:00"
+}

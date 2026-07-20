@@ -162,9 +162,15 @@ msn2/
 
 `write_run_manifest(...) -> Path` records git hashes, commands, dependency snapshot, data paths, GPU, timestamps, and artifact hashes.
 
-`main(argv: list[str] | None = None) -> int` exposes validation, smoke/timing, train/evaluate, strict serial Stage A, controlled-support, aggregation, packaging, and status actions.
+`main(argv: list[str] | None = None) -> int` exposes validation, smoke/timing, train/evaluate, strict serial Stage A, full result audit, controlled-support, aggregation, packaging, and status actions.
 
-### 5.5 `controlled.py`
+### 5.5 `audit.py`
+
+`audit_shift_views(views: Mapping[str, Mapping[str, ndarray]], rate: float) -> dict` verifies within-run sample/target/time invariance, exact `floor(rate*n)` requests, requested/actual equality, matched MCAR/burst counts, remaining-count accounting, history-mask counts, zeroed removed values, and unchanged retained values.
+
+`audit_stage_a(config: dict) -> dict` checks all 21 training manifests and 63 evaluation views, recomputes masked MSE/MAE, requires child-side nonzero CUDA peaks, checks checkpoint hashes and provenance, and verifies every variant uses byte-identical seed/shift data and masks; it writes `artifacts/stage_a_audit.json` and fails closed on any discrepancy.
+
+### 5.6 `controlled.py`
 
 `patch_units(...)` reconstructs APN's learned soft windows and normalized value/time-embedding centroids from the APN checkpoint and saved native histories, then retains one maximum-support patch per patient/channel.
 
@@ -172,7 +178,7 @@ msn2/
 
 `score_frozen_pairs(...)` applies identical pair IDs to all variants and computes masked channel-level target MSE; `run_controlled_support(...)` writes pair, error, and yield audits.
 
-### 5.6 `aggregate.py`
+### 5.7 `aggregate.py`
 
 `load_evaluation(path: Path) -> Evaluation` loads `metric.json`, saved prediction/target/mask/sample-ID arrays, and run manifest; it validates shape and finite values.
 
@@ -184,7 +190,9 @@ msn2/
 
 `decide_gate(summary: DataFrame, bootstrap: DataFrame, config: dict) -> dict` implements every condition in `idea_report.md` without manual overrides and returns only `PASS` or `ABANDON` with machine-readable reasons. Time overhead comes from the frozen real-P12 100-step artifact, not end-to-end wall time.
 
-### 5.7 `package.py`
+`run_aggregation(config: dict) -> dict` first requires the full audit to pass, then regenerates controlled-support/statistical artifacts and writes a Chinese report with readable gate evidence, audit provenance, failure-cause interpretation, and the frozen stop/extension decision.
+
+### 5.8 `package.py`
 
 `iter_delivery_files(project_root: Path, gate: dict) -> Iterator[Path]` includes code, configs, patch, docs, compact logs, manifests, summaries, tests, and selected predictions; excludes environments, raw data, caches, and large checkpoints unless explicitly requested.
 
@@ -254,6 +262,7 @@ Before download, the runner verifies that every resolved storage path is inside 
 | Artifact | Format | Required fields |
 |---|---|---|
 | `run_manifest.json` | JSON | variant, seed, shift, full command argv, git hashes, environment, GPU, peak CUDA allocated/reserved MiB and source, start/end, return code |
+| `stage_a_audit.json` | JSON | 21/63 completeness, metric recomputation, shift/target/cross-variant checks, CUDA/provenance checks, failures |
 | `metric.json` | JSON | masked MSE, masked MAE |
 | `patients.csv` | CSV | variant, seed, shift, patient ID, MSE, MAE, observed target count |
 | `stage_a_runs.csv` | CSV | per-run metric, timing, parameters, peak memory |

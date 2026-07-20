@@ -1,0 +1,50 @@
+{
+  "schema_version": 1,
+  "pairing_is_error_blind": true,
+  "settings": {
+    "source_variant": "apn",
+    "max_centroid_rms": 0.35,
+    "min_effective_support_ratio": 2.0,
+    "min_effective_support_difference": 1.0,
+    "minimum_pairs_per_seed": 100,
+    "support_epsilon": 1e-09
+  },
+  "seeds": [
+    {
+      "seed": 2024,
+      "source_variant": "apn",
+      "source_evaluation": "C:\\Users\\qintian\\Desktop\\msn2\\results\\stage_a\\apn\\2024\\checkpoints\\P12\\APN\\APN_P12_apn_seed2024\\36_3\\2026_0721_0253\\iter0\\eval_native",
+      "source_checkpoint": "C:\\Users\\qintian\\Desktop\\msn2\\results\\stage_a\\apn\\2024\\checkpoints\\P12\\APN\\APN_P12_apn_seed2024\\36_3\\2026_0721_0253\\iter0\\pytorch_model.bin",
+      "source_checkpoint_sha256": "927b3e540b7450d37897fd1a78dbbbaa1ff93152d1456c350d22f9f1cc41e3d4",
+      "eligible_units": 10845,
+      "matched_pairs": 936,
+      "minimum_pairs": 100,
+      "yield_passed": true
+    },
+    {
+      "seed": 2025,
+      "source_variant": "apn",
+      "source_evaluation": "C:\\Users\\qintian\\Desktop\\msn2\\results\\stage_a\\apn\\2025\\checkpoints\\P12\\APN\\APN_P12_apn_seed2025\\36_3\\2026_0721_0255\\iter0\\eval_native",
+      "source_checkpoint": "C:\\Users\\qintian\\Desktop\\msn2\\results\\stage_a\\apn\\2025\\checkpoints\\P12\\APN\\APN_P12_apn_seed2025\\36_3\\2026_0721_0255\\iter0\\pytorch_model.bin",
+      "source_checkpoint_sha256": "945ef93c856c73ef59a39d6c27baaf7599cbebff9b42b55b45381ac255ed6bb9",
+      "eligible_units": 9998,
+      "matched_pairs": 940,
+      "minimum_pairs": 100,
+      "yield_passed": true
+    },
+    {
+      "seed": 2026,
+      "source_variant": "apn",
+      "source_evaluation": "C:\\Users\\qintian\\Desktop\\msn2\\results\\stage_a\\apn\\2026\\checkpoints\\P12\\APN\\APN_P12_apn_seed2026\\36_3\\2026_0721_0257\\iter0\\eval_native",
+      "source_checkpoint": "C:\\Users\\qintian\\Desktop\\msn2\\results\\stage_a\\apn\\2026\\checkpoints\\P12\\APN\\APN_P12_apn_seed2026\\36_3\\2026_0721_0257\\iter0\\pytorch_model.bin",
+      "source_checkpoint_sha256": "36303d6b1f2fa449e35e93bb9bfcc7446641a78580367a97c9c45847117ac641",
+      "eligible_units": 9836,
+      "matched_pairs": 932,
+      "minimum_pairs": 100,
+      "yield_passed": true
+    }
+  ],
+  "all_seeds_meet_minimum": true,
+  "total_pairs": 2808,
+  "total_error_rows": 19656
+}

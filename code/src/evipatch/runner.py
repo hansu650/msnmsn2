@@ -853,6 +853,7 @@ def main(argv: list[str] | None = None) -> int:
             "train-variant",
             "evaluate-variant",
             "stage-a",
+            "audit",
             "controlled",
             "aggregate",
             "package",
@@ -883,6 +884,16 @@ def main(argv: list[str] | None = None) -> int:
         print(evaluate_one(config, args.variant, args.seed, args.shift, checkpoint))
     elif args.action == "stage-a":
         run_stage_a(config)
+    elif args.action == "audit":
+        from evipatch.audit import audit_stage_a
+
+        audit = audit_stage_a(config)
+        print(
+            json.dumps(
+                {key: audit[key] for key in ("status", "training_count", "evaluation_count")},
+                indent=2,
+            )
+        )
     elif args.action == "controlled":
         from evipatch.controlled import run_controlled_support
 

@@ -550,45 +550,77 @@ def _write_report(
     output: Path,
     gate: dict[str, Any],
     summary: pd.DataFrame,
+    audit: dict[str, Any],
 ) -> None:
+    conditions = gate["conditions"]
+    controlled = conditions["controlled_support_improvement"]
+    raw = conditions["full_beats_raw_macro"]
+    shuffled = conditions["full_beats_shuffled_evidence"]
+    random_control = conditions["full_beats_random_features"]
+    native = conditions["native_mse_regression"]
+    parameters = conditions["parameter_overhead"]
+    timing = conditions["time_overhead"]
     lines = [
         "# EviPatch 实验结果报告",
         "",
         f"- Stage A verdict: **{gate['verdict']}**",
-        "- 本报告是实验与可复现性汇总，不是论文正文。",
+        "- 本报告是实验、审计与可复现性汇总，不是论文正文。",
+        "",
+        "## 完整性与审计",
+        "",
+        f"- 全量审计：**{audit['status']}**；训练 {audit['training_count']}/21，评估 {audit['evaluation_count']}/63，差异项 {len(audit['failures'])}。",
+        f"- 项目实验提交：`{', '.join(audit['project_git_commits'])}`。",
+        f"- APN upstream commit：`{audit['apn_commit']}`。",
+        f"- APN patch SHA-256：`{audit['patch_sha256']}`。",
+        "- 审计覆盖 metric 重算、targets/target masks/sample IDs 不变、history-only shift、精确请求/实际删点、MCAR/burst 每患者变量匹配、跨变体 mask 一致、checkpoint/array hashes、CUDA 峰值与 provenance。",
         "",
         "## Kill gate",
         "",
+        f"- controlled-support：{'通过' if controlled['passed'] else '失败'}；APN MSE {controlled.get('apn_mse', float('nan')):.6f}，full MSE {controlled.get('full_mse', float('nan')):.6f}，相对改善 {controlled.get('relative_improvement', float('nan')) * 100:.4f}%，阈值 ≥ {controlled['threshold'] * 100:.1f}%。",
+        f"- full vs raw_count macro：{'通过' if raw['passed'] else '失败'}；full−raw MSE {raw['estimate_full_minus_raw']:.7f}，95% CI [{raw['ci_low']:.7f}, {raw['ci_high']:.7f}]。",
+        f"- full vs shuffled：{'通过' if shuffled['passed'] else '失败'}；full−shuffled MSE {shuffled['estimate_full_minus_control']:.7f}，95% CI [{shuffled['ci_low']:.7f}, {shuffled['ci_high']:.7f}]。",
+        f"- full vs random_features：{'通过' if random_control['passed'] else '失败'}；full−random MSE {random_control['estimate_full_minus_control']:.7f}，95% CI [{random_control['ci_low']:.7f}, {random_control['ci_high']:.7f}]。",
+        f"- native 退化约束：{'通过' if native['passed'] else '失败'}；相对退化 {native['relative_regression'] * 100:.4f}%，上限 {native['maximum'] * 100:.1f}%。",
+        f"- 参数开销：{'通过' if parameters['passed'] else '失败'}；{parameters['relative_overhead'] * 100:.4f}%，上限 < {parameters['maximum'] * 100:.1f}%。",
+        f"- 100-step 时间开销：{'通过' if timing['passed'] else '失败'}；{timing.get('relative_overhead', float('nan')) * 100:.4f}%，上限 < {timing['maximum'] * 100:.1f}%。",
+        "",
+        "## 三种子汇总",
+        "",
+        "下表数值为三种子 mean ± std；macro 对 native/MCAR/burst 等权平均。",
+        "",
+        "| Variant | View | MSE | MAE |",
+        "|---|---|---:|---:|",
     ]
-    for name, detail in gate["conditions"].items():
-        status = "通过" if detail["passed"] else "失败"
-        lines.append(f"- {name}：{status}；{json.dumps(detail, ensure_ascii=False)}")
-    lines.extend(
-        [
-            "",
-            "## 三种子汇总",
-            "",
-            "下表数值为三种子 mean ± std；macro 对 native/MCAR/burst 等权平均。",
-            "",
-            "| Variant | View | MSE | MAE |",
-            "|---|---|---:|---:|",
-        ]
-    )
     for _, row in summary.iterrows():
         lines.append(
             f"| {row['variant']} | {row['shift']} | "
             f"{row['MSE_mean']:.6g} ± {row['MSE_std']:.3g} | "
             f"{row['MAE_mean']:.6g} ± {row['MAE_std']:.3g} |"
         )
+
+    lines.extend(["", "## 失败原因分析", ""])
+    if gate["verdict"] == "ABANDON":
+        lines.extend(
+            [
+                f"1. 受控 support 主指标没有达到机制成立所需的幅度：full 相对 APN 为 {controlled.get('relative_improvement', float('nan')) * 100:.4f}%，不仅低于 +5%，方向还略为负。2,808 个冻结 pair 且三种子均远高于最小产量，因而不能归因于 pair 数不足。",
+                "2. full 没有显著优于简单 `raw_count`：macro 的 95% CI 跨 0。这不支持三维 evidence signature 相对单一计数带来稳定增益。",
+                "3. `shuffled_evidence` 反而显著优于 full（full−shuffled 的 CI 全部为正）。这说明当前收益不能归因于 evidence 与样本/变量的正确对应；额外投影宽度、随机正则化或优化噪声是更符合数据的解释，但本实验不能进一步区分这些机制。",
+                f"4. `random_features` 也未被 full 显著击败；同时 full 的 native MSE 相对 APN 退化 {native['relative_regression'] * 100:.4f}%。因此 evidence quantity 在当前 APN/P12 设置中没有形成可重复的预测优势。",
+                "5. 全量审计为 PASS，排除了 target 被 shift 修改、不同变体删点不一致、计数不精确、artifact 损坏或 provenance 混杂等工程性解释。",
+            ]
+        )
+    else:
+        lines.append("所有预声明条件同时满足；未发现阻止条件扩展的审计或统计问题。")
+
     lines.extend(
         [
             "",
-            "## 结论",
+            "## 决策",
             "",
             (
                 "所有预声明条件同时满足，允许进入条件扩展。"
                 if gate["verdict"] == "PASS"
-                else "至少一个预声明条件失败，项目按协议标记为 ABANDON；不扩展新数据集或堆叠新模块。"
+                else "项目按预注册协议标记为 ABANDON；停止 HumanActivity、USHCN 与 t-PatchGNN 扩展，不新增或调参模型模块，只保留完整结果、失败分析与可复现包。"
             ),
             "",
         ]
@@ -597,8 +629,12 @@ def _write_report(
 
 
 def run_aggregation(config: dict[str, Any]) -> dict[str, Any]:
-    """Aggregate all Stage A results, bootstrap pairs, and decide the gate."""
+    """Audit and aggregate Stage A, bootstrap pairs, and decide the gate."""
     artifacts = ensure_project_dir(config["project"]["artifacts_root"])
+
+    from evipatch.audit import audit_stage_a
+
+    audit = audit_stage_a(config)
     runs, patients, summary = summarize_stage_a(
         config["project"]["results_root"], config
     )
@@ -624,7 +660,7 @@ def run_aggregation(config: dict[str, Any]) -> dict[str, Any]:
     (artifacts / "gate_decision.json").write_text(
         json.dumps(gate, indent=2, ensure_ascii=False), encoding="utf-8"
     )
-    _write_report(artifacts / "REPORT_CN.md", gate, summary)
+    _write_report(artifacts / "REPORT_CN.md", gate, summary, audit)
     return gate
 
 

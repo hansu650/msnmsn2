@@ -214,6 +214,39 @@ Status: ⬜ TODO / 🔄 WIP / ✅ Done (run-verified) / ❌ Blocked
 - **Recovery completed**: removed only the diagnostic `results/stage_a` and `logs/stage_a` trees after boundary verification; the formal matrix will restart from APN/2024 at the next commit.
 - **How to Run check**: commands are unchanged.
 
+## 2026-07-21 03:48 CST — Stage A complete; kill gate ABANDON
+
+- **Matrix completion**: all seven variants × three seeds trained sequentially on one RTX 4090; `runner status` verified 21/21 checkpoints and 63/63 native/MCAR/burst views, and the Stage A lock was released.
+- **Controlled-support yield**: error-blind APN geometry produced 936/940/932 frozen pairs for seeds 2024/2025/2026, all above the predeclared minimum of 100; 2,808 pairs generated 19,656 seven-variant error rows.
+- **Gate evidence**: full improved controlled-support MSE by `-0.1199%` versus the required `+5%`; full-minus-raw macro MSE was `0.0003818` with 95% CI `[-0.0005169, 0.0013172]`; full was significantly worse than shuffled with `0.0013241` and 95% CI `[0.0003639, 0.0023545]`; full also failed to significantly beat random features.
+- **Passed constraints only**: native regression was `0.3608%` (≤1%), parameter overhead `1.0745%` (<5%), and frozen 100-step time overhead `3.1295%` (<5%).
+- **Decision**: verdict is `ABANDON`. Per the frozen protocol, do not run HumanActivity, USHCN, or t-PatchGNN and do not add or tune model modules; proceed only with audit, failure analysis, and packaging.
+- **Audit implementation plan**: `research[E]-coding` adds a fail-closed `runner audit` action for all manifests, arrays, metrics, shifts, CUDA fields, provenance, and cross-variant mask equality; no training/evaluation result is changed.
+- **How to Run check**: add `runner audit` between `stage-a` and `controlled`; aggregation/package commands remain unchanged.
+
+## 2026-07-21 04:04 CST — Full audit and failure report verified
+
+- **Audit result**: `runner audit` returned `PASS` for 21/21 training manifests, 63/63 evaluation views, 21/21 run-level checks, and 63/63 cross-variant fingerprints with zero discrepancies; all formal runs use project commit `0bf46fc9d6cb00f70ffe110df8d48d4c3a592037` and patch SHA-256 `00D8D59221D1580EE2B718365325BD69945DC2C103B0C23D7F93F9365E301746`.
+- **Shift evidence**: every variant/seed preserves 1,199 sample IDs and 281,425 original history observations; exact MCAR and matched burst each request and remove 69,711 points, with unchanged targets/target masks/time marks and zeroed history-only removals.
+- **Aggregation contract**: `run_aggregation` now requires the audit to pass before regenerating controlled-support, patient/bootstrap, gate, and report artifacts.
+- **Report**: `artifacts/REPORT_CN.md` now records readable gate evidence, audit provenance, five bounded failure interpretations, and the frozen decision to stop all conditional extensions.
+- **Validation**: audit/aggregate/controlled targeted tests completed with `10 passed`; the final full boundary/parity/shift/package suite completed with `43 passed in 10.68s`.
+- **Known issue resolved**: controlled-support yield is no longer unknown; all seeds exceed the predeclared minimum by more than 9×.
+- **How to Run check**: `runner audit`, `runner aggregate`, and `runner package` are current below.
+
+## 2026-07-21 04:12 CST — Final delivery freeze
+
+- **Outcome freeze**: README and `REPORT_CN.md` state the same `ABANDON` verdict and explicitly record that HumanActivity, USHCN, and t-PatchGNN were not run.
+- **Required outputs**: the delivery selection contains source/config/tests/scripts, the 11-file APN patch, compact logs, 21 training + 63 evaluation manifests, 63 prediction/target/target-mask/sample-ID sets, deletion audits, statistics, gate, full audit, and Chinese report.
+- **Archive dry run**: 693 members and 691 manifest records passed member-set, per-member SHA-256, `testzip`, formal-count, compact-log-coverage, and forbidden-member checks; no `.conda`, dataset, vendor source, checkpoint, cache, secret, or `packages/` member was present.
+- **Git boundary**: push only code/docs plus compact JSON/CSV/Markdown results; exclude packages, environments, raw/processed data, full vendor source, checkpoints, caches, raw arrays, and raw Stage A logs. Recheck every candidate for the 100 MB limit before commit.
+- **How to Run check**: after this documentation freeze, rerun `runner package` once and verify its external ZIP SHA-256 without changing packaged inputs.
+
+## 2026-07-21 04:16 CST — Post-freeze regression passed
+
+- **Final code validation**: after the audit-gated aggregation and enhanced report generator were frozen, the complete boundary/parity/evidence/shift/runner/aggregate/package suite completed with `43 passed in 12.56s`.
+- **Delivery rule**: regenerate the archive once more only to capture this current compact smoke log; make no further packaged-input edits afterward.
+
 ## Known Issues
 
 - [ ] Official APN repository has no clearly detected top-level license; do not commit or package its source.
@@ -257,6 +290,7 @@ $env:PYTHONPATH = 'C:\Users\qintian\Desktop\msn2\code\src'
 & $evipatchPython -m evipatch.runner smoke
 & $evipatchPython -m evipatch.runner timing
 & $evipatchPython -m evipatch.runner stage-a
+& $evipatchPython -m evipatch.runner audit
 & $evipatchPython -m evipatch.runner controlled
 & $evipatchPython -m evipatch.runner aggregate
 & $evipatchPython -m evipatch.runner package
@@ -267,6 +301,7 @@ $env:PYTHONPATH = 'C:\Users\qintian\Desktop\msn2\code\src'
 - **`smoke`**: runs the project pytest suite and writes `logs/smoke/pytest.log`.
 - **`timing`**: benchmarks exactly 100 measured real-P12 optimizer steps after warm-up for all seven variants and writes `artifacts/timing_100_steps.json`.
 - **`stage-a`**: acquires `results/stage_a/.stage_a.lock`, then trains 21 checkpoints and evaluates 63 views strictly sequentially; outputs checkpoints under `results/`, raw logs under `logs/`, arrays/metrics beside each checkpoint, and one JSON manifest per process.
+- **`audit`**: fails closed unless all 21/63 manifests, arrays, metric recomputations, shift audits, cross-variant masks, CUDA peaks, hashes, and provenance checks pass; writes `artifacts/stage_a_audit.json`.
 - **`controlled`**: freezes error-blind real-data support pairs from each APN checkpoint/native history and scores identical pair IDs for all variants.
 - **`aggregate`**: produces patient errors, seed summaries, hierarchical paired bootstrap results, and `gate_decision.json` under `artifacts/`.
 - **`package`**: creates the final filtered ZIP and `SHA256SUMS.csv` under `packages/`.
