@@ -1,0 +1,38 @@
+# Local Conda environment
+.conda/
+
+# Baseline source and generated data
+vendor/APN/
+code/data/
+data/
+datasets/
+checkpoints/
+cache/
+
+# Experiment outputs (selected compact summaries may be force-added deliberately)
+code/logs/
+code/results/
+logs/
+results/
+artifacts/
+packages/
+
+# Python / test caches
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+
+# Editors / OS
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Secrets and large model artifacts
+.env
+*.ckpt
+*.pth
+*.pt
+*.pkl
+*.npz

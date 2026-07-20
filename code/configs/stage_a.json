@@ -1,0 +1,112 @@
+{
+  "schema_version": 1,
+  "project": {
+    "name": "EviPatch",
+    "root": "C:\\Users\\qintian\\Desktop\\msn2",
+    "python": "C:\\Users\\qintian\\Desktop\\msn2\\.conda\\envs\\evipatch\\python.exe",
+    "apn_root": "C:\\Users\\qintian\\Desktop\\msn2\\vendor\\APN",
+    "tsdm_root": "C:\\Users\\qintian\\Desktop\\msn2\\data\\tsdm",
+    "results_root": "C:\\Users\\qintian\\Desktop\\msn2\\results",
+    "logs_root": "C:\\Users\\qintian\\Desktop\\msn2\\logs",
+    "artifacts_root": "C:\\Users\\qintian\\Desktop\\msn2\\artifacts",
+    "packages_root": "C:\\Users\\qintian\\Desktop\\msn2\\packages"
+  },
+  "upstream": {
+    "url": "git@github.com:decisionintelligence/APN.git",
+    "commit": "f0d6eeb7a2ee2d7c76475bf725b7ea25f98af3f4",
+    "patch": "C:\\Users\\qintian\\Desktop\\msn2\\patches\\apn_evipatch.patch"
+  },
+  "stage_a": {
+    "dataset_name": "P12",
+    "variants": [
+      "apn",
+      "global_ratio",
+      "raw_count",
+      "soft_mass",
+      "evipatch_full",
+      "shuffled_evidence",
+      "random_features"
+    ],
+    "seeds": [2024, 2025, 2026],
+    "shifts": ["none", "mcar", "burst"],
+    "shift_rate": 0.3,
+    "shift_seed_policy": "checkpoint_seed",
+    "random_feature_seed": 1729,
+    "sequential_gpu_only": true,
+    "gpu_id": 0,
+    "hyperparameters": {
+      "task_name": "short_term_forecast",
+      "features": "M",
+      "seq_len": 36,
+      "label_len": 0,
+      "pred_len": 3,
+      "enc_in": 36,
+      "dec_in": 36,
+      "c_out": 36,
+      "d_model": 24,
+      "learning_rate": 0.03,
+      "batch_size": 32,
+      "dropout": 0.1,
+      "apn_npatch": 20,
+      "apn_te_dim": 8,
+      "train_epochs": 200,
+      "patience": 10,
+      "val_interval": 1,
+      "loss": "MSE",
+      "lr_scheduler": "DelayedStepDecayLR",
+      "optimizer": "Adam",
+      "num_workers": 10
+    }
+  },
+  "smoke": {
+    "timing_steps": 100,
+    "warmup_steps": 10,
+    "train_epochs": 1,
+    "patience": 1
+  },
+  "controlled_support": {
+    "source_variant": "apn",
+    "max_centroid_rms": 0.35,
+    "min_effective_support_ratio": 2.0,
+    "min_effective_support_difference": 1.0,
+    "minimum_pairs_per_seed": 100,
+    "support_epsilon": 1e-09
+  },
+  "statistics": {
+    "primary_metric": "MSE",
+    "secondary_metric": "MAE",
+    "bootstrap_resamples": 10000,
+    "bootstrap_rng_seed": 271828,
+    "confidence": 0.95,
+    "macro_shifts": ["none", "mcar", "burst"]
+  },
+  "gate": {
+    "controlled_support_relative_improvement_min": 0.05,
+    "native_mse_regression_max": 0.01,
+    "parameter_overhead_max": 0.05,
+    "time_overhead_max": 0.05,
+    "full_vs_raw_macro_ci_must_exclude_zero": true,
+    "full_vs_shuffled_macro_ci_must_exclude_zero": true,
+    "full_vs_random_macro_ci_must_exclude_zero": true
+  },
+  "conditional_stage_b": {
+    "datasets": ["HumanActivity", "USHCN"],
+    "variants": ["apn", "raw_count", "evipatch_full", "shuffled_evidence"],
+    "seeds": [2024, 2025, 2026],
+    "shifts": ["none", "mcar", "burst"],
+    "tpatchgnn_physionet_views": ["none", "burst"]
+  },
+  "packaging": {
+    "max_included_file_bytes": 52428800,
+    "forbidden_path_parts": [
+      ".conda",
+      "data",
+      "vendor/APN",
+      "__pycache__",
+      ".pytest_cache",
+      "cache",
+      "checkpoints"
+    ],
+    "forbidden_extensions": [".ckpt", ".pth", ".pt", ".pkl"]
+  }
+}

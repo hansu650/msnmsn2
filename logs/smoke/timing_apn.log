@@ -1,0 +1,25 @@
+[32m2026-07-21 01:48:57[0m [1;30mDEBUG[0m [32mCUDA_VISIBLE_DEVICES: [0m
+[32m2026-07-21 01:48:57[0m [1;30mDEBUG[0m [32mPrimary GPU: 0[0m
+[32m2026-07-21 01:48:57[0m [1;30mINFO[0m >>>>>>> testing start <<<<<<<
+[32m2026-07-21 01:48:57[0m [1;30mINFO[0m Using batch_size=32 for training time test.
+[32m2026-07-21 01:48:58[0m [1;30mDEBUG[0m [32mgetting train set of PhysioNet'12 in tsdm format[0m
+[32m2026-07-21 01:49:02[0m [1;30mDEBUG[0m [32mself.configs.seq_len_max_irr=35[0m
+[32m2026-07-21 01:49:02[0m [1;30mDEBUG[0m [32mself.configs.pred_len_max_irr=3[0m
+[32m2026-07-21 01:49:03[0m [1;30mINFO[0m --- Training Step Time Test for APN_P12_apn_seed2024 ---
+[32m2026-07-21 01:49:35[0m [1;30mINFO[0m Total batches: 303. Warming up for 10 step(s)...
+
+Warmup:   0%|          | 0/10 [00:00<?, ?it/s]
+Warmup:  10%|█         | 1/10 [00:00<00:02,  4.27it/s]
+Warmup: 100%|██████████| 10/10 [00:00<00:00, 32.02it/s]
+[32m2026-07-21 01:49:35[0m [1;30mINFO[0m Testing for the remaining 100 step(s)...
+
+Testing Train Time:   0%|          | 0/100 [00:00<?, ?it/s]
+Testing Train Time:  11%|█         | 11/100 [00:00<00:00, 103.42it/s]
+Testing Train Time:  24%|██▍       | 24/100 [00:00<00:00, 116.59it/s]
+Testing Train Time:  36%|███▌      | 36/100 [00:00<00:00, 117.59it/s]
+Testing Train Time:  52%|█████▏    | 52/100 [00:00<00:00, 130.50it/s]
+Testing Train Time:  70%|███████   | 70/100 [00:00<00:00, 146.99it/s]
+Testing Train Time:  88%|████████▊ | 88/100 [00:00<00:00, 156.40it/s]
+Testing Train Time: 100%|██████████| 100/100 [00:00<00:00, 142.52it/s]
+[32m2026-07-21 01:49:36[0m [1;30mINFO[0m Average training step time (based on 100 samples): 5.592 ms ± 1.580 ms
+[32m2026-07-21 01:49:36[0m [1;30mINFO[0m -------------------------------------------------

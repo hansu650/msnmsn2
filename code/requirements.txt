@@ -1,0 +1,15 @@
+accelerate
+coloredlogs
+einops
+numpy
+pandas
+psutil
+ptflops
+pyarrow
+pytest
+pyyaml
+requests
+scikit-learn
+scipy
+tqdm
+wandb

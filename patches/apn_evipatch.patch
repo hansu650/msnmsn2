@@ -1,0 +1,383 @@
+diff --git a/data/data_provider/data_factory.py b/data/data_provider/data_factory.py
+index 03f6cad..2356b15 100644
+--- a/data/data_provider/data_factory.py
++++ b/data/data_provider/data_factory.py
+@@ -1,4 +1,5 @@
+ import importlib
++from functools import partial
+ 
+ from torch.utils.data import Dataset, DataLoader
+ from utils.ExpConfigs import ExpConfigs
+@@ -36,6 +37,10 @@ def data_provider(configs: ExpConfigs, flag: str, shuffle_flag: bool = None, dro
+         # DEBUG: temporal change
+         # **configs._asdict()
+     )
++    if configs.dataset_name == "P12" and collate_fn is not None:
++        # Windows workers use spawn and must receive runtime-mutated padding/shift config.
++        collate_fn = partial(collate_fn, runtime_configs=configs)
++
+     data_loader = DataLoader(
+         data_set,
+         batch_size=batch_size,
+diff --git a/data/data_provider/datasets/P12.py b/data/data_provider/datasets/P12.py
+index 3f85644..12f401b 100644
+--- a/data/data_provider/datasets/P12.py
++++ b/data/data_provider/datasets/P12.py
+@@ -11,6 +11,7 @@ from utils.ExpConfigs import ExpConfigs
+ from utils.configs import configs
+ from data.dependencies.tsdm.tasks.P12 import Physionet2012
+ from data.dependencies.tsdm.tasks.P12 import Sample
++from evipatch.shifts import apply_observation_shift
+ 
+ warnings.filterwarnings('ignore')
+ 
+@@ -220,13 +221,14 @@ def fix_nan_y_mark(y_mark):
+ 
+ def collate_fn(
+     batch: list[Sample],
++    runtime_configs: ExpConfigs | None = None,
+ ) -> dict[Tensor]:
+     '''
+     time-aligned padding
+     '''
+-    global configs
+-    seq_len_max_irr: int = configs.seq_len_max_irr
+-    pred_len_max_irr: int = configs.pred_len_max_irr
++    active_configs = runtime_configs or configs
++    seq_len_max_irr: int = active_configs.seq_len_max_irr
++    pred_len_max_irr: int = active_configs.pred_len_max_irr
+ 
+     xs: list[Tensor] = []
+     ys: list[Tensor] = []
+@@ -281,7 +283,7 @@ def collate_fn(
+ 
+     sample_IDs = torch.tensor(sample_IDs).float()
+ 
+-    if configs.missing_rate > 0:
++    if active_configs.missing_rate > 0:
+         # manually mask out some observations in input
+         # Flatten the mask and data tensor
+         flat_mask = x_masks.view(-1)
+@@ -290,7 +292,7 @@ def collate_fn(
+         # Find indices of available data (where mask is 1)
+         available_flat_indices = torch.where(flat_mask == 1)[0]
+         num_available = available_flat_indices.size(0)
+-        num_to_mask = int(configs.missing_rate * num_available)
++        num_to_mask = int(active_configs.missing_rate * num_available)
+ 
+         if num_to_mask > 0:
+             # Generate random permutation on the same device
+@@ -301,17 +303,40 @@ def collate_fn(
+             flat_x[selected_flat] = torch.nan
+             flat_mask[selected_flat] = 0
+         else:
+-            logger.warning(f"Number of observations {num_available} * missing rate {configs.missing_rate} = {num_to_mask} observations to be masked. Tips: either observations are too sparse, or --missing_rate is too small. Consider increase --missing_rate.")
++            logger.warning(f"Number of observations {num_available} * missing rate {active_configs.missing_rate} = {num_to_mask} observations to be masked. Tips: either observations are too sparse, or --missing_rate is too small. Consider increase --missing_rate.")
+ 
+-    return {
++    result = {
+         "x": torch.nan_to_num(xs),
+-        "x_mark": fix_nan_x_mark(x_marks.unsqueeze(-1), seq_len=configs.seq_len).float(),
++        "x_mark": fix_nan_x_mark(x_marks.unsqueeze(-1), seq_len=active_configs.seq_len).float(),
+         "x_mask": x_masks.float(),
+         "y": torch.nan_to_num(ys),
+         "y_mark": fix_nan_y_mark(y_marks.unsqueeze(-1)).float(),
+         "y_mask": y_masks.float(),
+         "sample_ID": sample_IDs
+     }
++    if active_configs.is_training:
++        observed = (result["x_mask"] > 0).sum(dim=1, dtype=torch.int64)
++        zeros = torch.zeros_like(observed)
++        audit = {
++            "shift_requested": zeros,
++            "shift_actual": zeros.clone(),
++            "shift_original_observed": observed,
++            "shift_remaining_observed": observed.clone(),
++        }
++    else:
++        shifted_x, shifted_mask, audit = apply_observation_shift(
++            result["x"],
++            result["x_mask"],
++            result["x_mark"],
++            result["sample_ID"],
++            active_configs.observation_shift,
++            active_configs.shift_rate,
++            active_configs.shift_seed,
++        )
++        result["x"] = shifted_x
++        result["x_mask"] = shifted_mask
++    result.update(audit)
++    return result
+ 
+ def collate_fn_patch(
+     batch: list[Sample],
+diff --git a/data/dependencies/tsdm/config/_config.py b/data/dependencies/tsdm/config/_config.py
+index a188b02..73d1364 100644
+--- a/data/dependencies/tsdm/config/_config.py
++++ b/data/dependencies/tsdm/config/_config.py
+@@ -92,7 +92,19 @@ with resources.open_text(config_files, "hashes.yaml") as file:
+ HOMEDIR = Path.home()
+ r"""The users home directory."""
+ 
+-BASEDIR = HOMEDIR.joinpath(CONFIG["basedir"])
++_evipatch_tsdm_root = os.environ.get("EVIPATCH_TSDM_ROOT")
++_evipatch_project_root = os.environ.get("EVIPATCH_PROJECT_ROOT")
++if _evipatch_project_root and not _evipatch_tsdm_root:
++    raise RuntimeError("EVIPATCH_TSDM_ROOT is required for an isolated EviPatch run")
++if _evipatch_tsdm_root:
++    if not _evipatch_project_root:
++        raise RuntimeError("EVIPATCH_PROJECT_ROOT is required with EVIPATCH_TSDM_ROOT")
++    _resolved_project_root = Path(_evipatch_project_root).resolve()
++    BASEDIR = Path(_evipatch_tsdm_root).resolve()
++    if os.path.commonpath([str(_resolved_project_root), str(BASEDIR)]) != str(_resolved_project_root):
++        raise RuntimeError(f"TSDM storage escapes EviPatch project root: {BASEDIR}")
++else:
++    BASEDIR = HOMEDIR.joinpath(CONFIG["basedir"])
+ r"""Root directory for tsdm storage."""
+ 
+ LOGDIR = BASEDIR.joinpath(CONFIG["logdir"])
+diff --git a/data/dependencies/tsdm/datasets/physionet2012.py b/data/dependencies/tsdm/datasets/physionet2012.py
+index dd50850..f30f885 100644
+--- a/data/dependencies/tsdm/datasets/physionet2012.py
++++ b/data/dependencies/tsdm/datasets/physionet2012.py
+@@ -429,10 +429,10 @@ class Physionet2012(MultiFrameDataset):
+         )
+         time_series_df.columns.name = None
+ 
+-        self.dataset[key] = metadata_df, time_series_df
++        self.dataset[key] = time_series_df, metadata_df
+         # pdb.set_trace()
+ 
+-        return metadata_df, time_series_df
++        return time_series_df, metadata_df
+ 
+     @staticmethod
+     def serialize(
+diff --git a/data/dependencies/tsdm/utils/types/dtypes.py b/data/dependencies/tsdm/utils/types/dtypes.py
+index 323ba67..6e22c40 100644
+--- a/data/dependencies/tsdm/utils/types/dtypes.py
++++ b/data/dependencies/tsdm/utils/types/dtypes.py
+@@ -52,6 +52,13 @@ from datetime import datetime, timedelta
+ from typing import Final, TypeAlias
+ 
+ import numpy as np
++
++# NumPy on Windows omits the extended-precision attribute names expected by
++# this bundled tsdm revision. Preserve native definitions when available.
++if not hasattr(np, "float128"):
++    np.float128 = np.longdouble
++if not hasattr(np, "complex256"):
++    np.complex256 = np.clongdouble
+ import pandas
+ import torch
+ from pandas.api.extensions import ExtensionDtype
+diff --git a/exp/exp_main.py b/exp/exp_main.py
+index d21fd1a..c1ce2e4 100644
+--- a/exp/exp_main.py
++++ b/exp/exp_main.py
+@@ -564,7 +564,12 @@ class Exp_Main(Exp_Basic):
+                 model_test = model_test.to(f"cuda:{self.configs.gpu_id}")
+ 
+             # create folder for test results
+-            subfolder_eval = f'eval_{datetime.datetime.now().strftime("%Y_%m%d_%H%M")}'
++            if self.configs.evipatch_eval_name:
++                if not self.configs.evipatch_eval_name.replace('_', '').replace('-', '').isalnum():
++                    raise ValueError("evipatch_eval_name may contain only letters, digits, '_' and '-'")
++                subfolder_eval = f"eval_{self.configs.evipatch_eval_name}"
++            else:
++                subfolder_eval = f'eval_{datetime.datetime.now().strftime("%Y_%m%d_%H%M")}'
+             folder_path = checkpoint_location_itr / subfolder_eval
+             folder_path.mkdir(exist_ok=True)
+             logger.info(f"Testing results will be saved under {folder_path}")
+@@ -572,7 +577,10 @@ class Exp_Main(Exp_Basic):
+             # dictionary holding input and output data
+             array_dict = {}
+             if self.configs.task_name in ["short_term_forecast", "long_term_forecast", "imputation"]:
+-                input_tensor_names = ["x", "y", "x_mask", "y_mask", "sample_ID"]
++                input_tensor_names = [
++                    "x", "x_mark", "y", "x_mask", "y_mask", "sample_ID", "shift_requested",
++                    "shift_actual", "shift_original_observed", "shift_remaining_observed"
++                ]
+                 output_tensor_names = ["pred"]
+             else:
+                 raise NotImplementedError
+diff --git a/main.py b/main.py
+index 1ce7e61..0fa00c2 100644
+--- a/main.py
++++ b/main.py
+@@ -10,7 +10,7 @@ from utils.configs import configs
+ 
+ def main():
+     # random seed
+-    fix_seed_list = range(2024, 2024 + configs.itr)
++    fix_seed_list = range(configs.seed_base, configs.seed_base + configs.itr)
+ 
+     configs.use_gpu = True if torch.cuda.is_available() and configs.use_gpu else False
+ 
+@@ -61,7 +61,8 @@ def main():
+             exp.train()
+ 
+             torch.cuda.empty_cache()
+-        exp.test()
++        if not configs.skip_test_after_train:
++            exp.test()
+     else:
+         exp = Exp(configs)
+         exp.test()
+diff --git a/models/APN.py b/models/APN.py
+index 4bf549f..04f60db 100644
+--- a/models/APN.py
++++ b/models/APN.py
+@@ -6,6 +6,12 @@ import torch.nn.functional as F
+ 
+ from utils.globals import logger
+ from utils.ExpConfigs import ExpConfigs
++from evipatch.evidence import (
++    apply_evidence_control,
++    compute_evidence,
++    evidence_width,
++    fixed_random_features,
++)
+ 
+ class PositionalEncoding(nn.Module):
+     def __init__(self, d_model, max_len=512):
+@@ -24,7 +30,18 @@ class PositionalEncoding(nn.Module):
+ 
+ 
+ class AttentionPatchAggregation(nn.Module):
+-    def __init__(self, N, P, S, te_dim, hid_dim, history, dropout_rate=0.1):
++    def __init__(
++        self,
++        N,
++        P,
++        S,
++        te_dim,
++        hid_dim,
++        history,
++        dropout_rate=0.1,
++        evipatch_mode="apn",
++        random_seed=1729,
++    ):
+         super().__init__()
+         self.N = N
+         self.P = P
+@@ -32,7 +49,14 @@ class AttentionPatchAggregation(nn.Module):
+         self.history = history
+         self.hid_dim = hid_dim
+         self.te_dim = te_dim
+-        self.feature_dim = 1 + te_dim
++        self.evipatch_mode = evipatch_mode
++        self.feature_dim = 1 + te_dim + evidence_width(evipatch_mode)
++        random_table = (
++            fixed_random_features(N, P, width=3, seed=random_seed)
++            if evipatch_mode == "random_features"
++            else None
++        )
++        self.register_buffer("random_feature_table", random_table)
+         self.delta_left_params = nn.Parameter(torch.zeros(N, P))
+         self.raw_log_width_params = nn.Parameter(torch.full((N, P), math.log(self.S)))
+         self.tau_params = nn.Parameter(torch.zeros(N))
+@@ -66,6 +90,22 @@ class AttentionPatchAggregation(nn.Module):
+         sum_weights = temporal_weights.sum(dim=-1, keepdim=True) + 1e-9
+         weighted_features_sum = torch.bmm(temporal_weights, x_with_te)
+         h_patches_avg = weighted_features_sum / sum_weights
++        if self.evipatch_mode != "apn":
++            stats = compute_evidence(
++                temporal_weights=temporal_weights,
++                weights_raw=weights_raw,
++                mask=mask_b_n,
++                times=t_raw_b_n,
++                left=t_left_b_n,
++                right=t_right_b_n,
++            )
++            signature = apply_evidence_control(
++                stats,
++                self.evipatch_mode,
++                n_variables=self.N,
++                random_table=self.random_feature_table,
++            )
++            h_patches_avg = torch.cat([h_patches_avg, signature], dim=-1)
+         h_patches_proj = self.projection_layer(h_patches_avg)
+         h_patches = self.norm(h_patches_proj + self.ffn(h_patches_proj))
+         return h_patches
+@@ -96,7 +136,9 @@ class IMTS_SubModel(nn.Module):
+             te_dim=self.te_dim,
+             hid_dim=self.hid_dim,
+             history=1.0,
+-            dropout_rate=self.dropout_rate
++            dropout_rate=self.dropout_rate,
++            evipatch_mode=configs.evipatch_mode,
++            random_seed=configs.evipatch_random_seed
+         )
+ 
+         self.patch_pos_enc = PositionalEncoding(self.hid_dim, max_len=self.P)
+diff --git a/utils/ExpConfigs.py b/utils/ExpConfigs.py
+index 1953bac..952a37d 100644
+--- a/utils/ExpConfigs.py
++++ b/utils/ExpConfigs.py
+@@ -173,6 +173,14 @@ class ExpConfigs:
+     apn_patch_size: float
+     apn_nlayer: int
+     apn_attn_heads: int
++    evipatch_mode: str
++    evipatch_random_seed: int
++    observation_shift: str
++    shift_rate: float
++    shift_seed: int
++    seed_base: int
++    evipatch_eval_name: str
++    skip_test_after_train: int
+     # Used to be compatible with ipython. Never used
+     f: int = 1
+ 
+diff --git a/utils/configs.py b/utils/configs.py
+index 998d2ed..c29a74e 100644
+--- a/utils/configs.py
++++ b/utils/configs.py
+@@ -204,6 +204,24 @@ parser.add_argument('--apn_nlayer', type=int, default=2,
+                     help='Number of layers in the core APN model.')
+ parser.add_argument('--apn_attn_heads', type=int, default=8,
+                     help='Number of attention heads for cross-variable aggregation in APN.')
++parser.add_argument('--evipatch_mode', type=str,
++                    choices=['apn', 'global_ratio', 'raw_count', 'soft_mass',
++                             'evipatch_full', 'shuffled_evidence', 'random_features'],
++                    default='apn', help='Evidence/control variant for APN patch aggregation.')
++parser.add_argument('--evipatch_random_seed', type=int, default=1729,
++                    help='Seed for the fixed, non-trainable random feature table.')
++parser.add_argument('--observation_shift', type=str, choices=['none', 'mcar', 'burst'],
++                    default='none', help='Deterministic test-history observation shift.')
++parser.add_argument('--shift_rate', type=float, default=0.0,
++                    help='Per-sample/channel fraction removed at test time.')
++parser.add_argument('--shift_seed', type=int, default=0,
++                    help='Sample-ID keyed observation-shift seed.')
++parser.add_argument('--seed_base', type=int, default=2024,
++                    help='First explicit experiment seed; preserves the official 2024 default.')
++parser.add_argument('--evipatch_eval_name', type=str, default='',
++                    help='Stable evaluation folder suffix supplied by the EviPatch runner.')
++parser.add_argument('--skip_test_after_train', type=int, default=0,
++                    help='Skip APN automatic test so the runner can time each view separately.')
+ configs = ExpConfigs(**vars(parser.parse_args())) # enable type hints
+ 
+ # .yaml reference file maintainance
+diff --git a/utils/tools.py b/utils/tools.py
+index 53d9f2c..3fb61d0 100644
+--- a/utils/tools.py
++++ b/utils/tools.py
+@@ -188,7 +188,7 @@ def test_training_step_time(
+     # 确保预热步数不超过总步数的一半
+     actual_warmup_steps = min(actual_warmup_steps, num_batches // 2)
+ 
+-    actual_test_steps = num_batches - actual_warmup_steps
++    actual_test_steps = min(test_steps, num_batches - actual_warmup_steps)
+     # --- 修改结束 ---
+ 
+     times = []
+@@ -268,7 +268,7 @@ def test_inference_step_time(
+ 
+     actual_warmup_steps = min(actual_warmup_steps, num_batches // 2)
+ 
+-    actual_test_steps = num_batches - actual_warmup_steps
++    actual_test_steps = min(test_steps, num_batches - actual_warmup_steps)
+     # --- 修改结束 ---
+ 
+     times = []
