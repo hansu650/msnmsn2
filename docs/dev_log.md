@@ -186,6 +186,16 @@ Status: ⬜ TODO / 🔄 WIP / ✅ Done (run-verified) / ❌ Blocked
 - **Git boundary**: 48 files totaling 276,170 bytes passed staged `diff --check`, forbidden-path checks, and the 100 MB limit; no environment, data, vendor source, result tree, checkpoint, cache, or package was tracked.
 - **Formatting**: added explicit LF rules for source/docs/patch/log artifacts and CRLF for PowerShell; nested patch whitespace is exempted only from top-level patch-file false positives.
 - **How to Run check**: commands are unchanged.
+
+## 2026-07-21 02:26 CST — Windows Stage A loader iteration
+
+- **ResearchPilot phase**: `research[F]-iteration`; diagnosed an execution bottleneck after the first incomplete APN/2024 attempt, before any training manifest or evaluation result was accepted.
+- **Observation**: with the official `num_workers=10`, Windows `spawn` startup consumed roughly 30 seconds for the training iterator and 27 seconds for validation in every epoch, while the model steps themselves completed in only a few seconds.
+- **Decision**: set the Stage A runtime-only loader setting to `num_workers=0`. This preserves the official P12 split/preprocessing, batch size, shuffled sampler, seed policy, model, loss, Adam optimizer, schedule, and all model hyperparameters; it only removes repeated worker-process startup.
+- **Recovery**: terminate the exact project-owned runner/child/worker PIDs, remove only the incomplete `results/stage_a/apn/2024` tree and stale Stage A lock, then restart the matrix from APN/2024. No completed checkpoint, manifest, metric, or evaluation is discarded.
+- **Validation required before restart**: boundary validation plus the full unit/smoke suite, followed by direct confirmation that the first restarted epoch no longer shows the worker-spawn delay.
+- **How to Run check**: commands remain unchanged; `stage-a` reads the revised boundary-checked config.
+
 ## Known Issues
 
 - [ ] Official APN repository has no clearly detected top-level license; do not commit or package its source.

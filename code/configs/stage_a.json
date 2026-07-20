@@ -55,7 +55,7 @@
       "loss": "MSE",
       "lr_scheduler": "DelayedStepDecayLR",
       "optimizer": "Adam",
-      "num_workers": 10
+      "num_workers": 0
     }
   },
   "smoke": {

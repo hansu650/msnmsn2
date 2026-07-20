@@ -225,6 +225,7 @@ msn2/
 ### `data_factory.py`
 
 - Bind the active P12 `ExpConfigs` into its collate function with a pickle-safe `functools.partial`. This is equivalent under Linux/fork and preserves runtime padding, seed, and shift values under Windows/spawn.
+- Stage A sets `num_workers=0` on Windows. The official value of 10 repeatedly spawns worker processes for every train/validation iterator and makes each epoch spend tens of seconds in process startup; the zero-worker setting changes only data-loading execution, not the split, collation, shuffle sampler, model, loss, optimizer, or hyperparameters that define the comparison.
 
 ### TSDM `_config.py`
 
