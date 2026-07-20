@@ -1,5 +1,5 @@
 diff --git a/data/data_provider/data_factory.py b/data/data_provider/data_factory.py
-index 03f6cad..2356b15 100644
+index 03f6cad7f13c2ef9c0a6cc01f63f71bb4e8d375a..2356b15b7582aae5b7f239e437185e06352a58df 100644
 --- a/data/data_provider/data_factory.py
 +++ b/data/data_provider/data_factory.py
 @@ -1,4 +1,5 @@
@@ -20,7 +20,7 @@ index 03f6cad..2356b15 100644
          data_set,
          batch_size=batch_size,
 diff --git a/data/data_provider/datasets/P12.py b/data/data_provider/datasets/P12.py
-index 3f85644..12f401b 100644
+index 3f856442f92013d9cc8741e783c6020733c57f9e..12f401bbe9a8d6f92c5592375252d5ec1d71bcd5 100644
 --- a/data/data_provider/datasets/P12.py
 +++ b/data/data_provider/datasets/P12.py
 @@ -11,6 +11,7 @@ from utils.ExpConfigs import ExpConfigs
@@ -112,7 +112,7 @@ index 3f85644..12f401b 100644
  def collate_fn_patch(
      batch: list[Sample],
 diff --git a/data/dependencies/tsdm/config/_config.py b/data/dependencies/tsdm/config/_config.py
-index a188b02..73d1364 100644
+index a188b02c5a030c6f499c7bed9c22ab23d1272dc7..73d136400a653e7ffb4d14c85348094b33825224 100644
 --- a/data/dependencies/tsdm/config/_config.py
 +++ b/data/dependencies/tsdm/config/_config.py
 @@ -92,7 +92,19 @@ with resources.open_text(config_files, "hashes.yaml") as file:
@@ -137,7 +137,7 @@ index a188b02..73d1364 100644
  
  LOGDIR = BASEDIR.joinpath(CONFIG["logdir"])
 diff --git a/data/dependencies/tsdm/datasets/physionet2012.py b/data/dependencies/tsdm/datasets/physionet2012.py
-index dd50850..f30f885 100644
+index dd50850ce6e8831e34d0b770c41fabaed722bf00..f30f885d5c3da223b2927762947f268cf500063b 100644
 --- a/data/dependencies/tsdm/datasets/physionet2012.py
 +++ b/data/dependencies/tsdm/datasets/physionet2012.py
 @@ -429,10 +429,10 @@ class Physionet2012(MultiFrameDataset):
@@ -154,7 +154,7 @@ index dd50850..f30f885 100644
      @staticmethod
      def serialize(
 diff --git a/data/dependencies/tsdm/utils/types/dtypes.py b/data/dependencies/tsdm/utils/types/dtypes.py
-index 323ba67..6e22c40 100644
+index 323ba677fd30ad35bc256438564b819c6bac1e56..6e22c40f1622ace23765c924d0879fc00f701387 100644
 --- a/data/dependencies/tsdm/utils/types/dtypes.py
 +++ b/data/dependencies/tsdm/utils/types/dtypes.py
 @@ -52,6 +52,13 @@ from datetime import datetime, timedelta
@@ -172,7 +172,7 @@ index 323ba67..6e22c40 100644
  import torch
  from pandas.api.extensions import ExtensionDtype
 diff --git a/exp/exp_main.py b/exp/exp_main.py
-index d21fd1a..c1ce2e4 100644
+index d21fd1a625708b6969778b1cb35bb1753f2add9b..c1ce2e43146c53e5065aeedcc099ad61202b3632 100644
 --- a/exp/exp_main.py
 +++ b/exp/exp_main.py
 @@ -564,7 +564,12 @@ class Exp_Main(Exp_Basic):
@@ -202,11 +202,54 @@ index d21fd1a..c1ce2e4 100644
              else:
                  raise NotImplementedError
 diff --git a/main.py b/main.py
-index 1ce7e61..0fa00c2 100644
+index 1ce7e61e9b503f6648160f6bb54c8aa124fc53f2..5506c3fe336f05739b8b7a2c09c6171cafc4d282 100644
 --- a/main.py
 +++ b/main.py
-@@ -10,7 +10,7 @@ from utils.configs import configs
+@@ -1,5 +1,6 @@
+ import random
+ import datetime
++import json
  
+ import torch
+ import numpy as np
+@@ -8,9 +9,43 @@ from exp.exp_main import Exp_Main
+ from utils.globals import logger, accelerator
+ from utils.configs import configs
+ 
++EVIPATCH_CUDA_PEAK_MARKER = "EVIPATCH_CUDA_PEAK_JSON="
++
++
++def _cuda_audit_enabled():
++    return torch.cuda.is_available() and bool(configs.use_gpu)
++
++
++def _reset_evipatch_cuda_peak():
++    if not _cuda_audit_enabled():
++        return
++    try:
++        device = int(configs.gpu_id)
++        torch.cuda.set_device(device)
++        torch.cuda.reset_peak_memory_stats(device)
++    except Exception as error:
++        logger.warning(f"Could not reset EviPatch CUDA peak counters: {error}")
++
++
++def _emit_evipatch_cuda_peak():
++    if not _cuda_audit_enabled():
++        return
++    try:
++        device = int(configs.gpu_id)
++        torch.cuda.synchronize(device)
++        payload = {
++            "allocated_mib": torch.cuda.max_memory_allocated(device) / (1024 ** 2),
++            "reserved_mib": torch.cuda.max_memory_reserved(device) / (1024 ** 2),
++        }
++    except Exception as error:
++        logger.warning(f"Could not read EviPatch CUDA peak counters: {error}")
++        return
++    print(f"{EVIPATCH_CUDA_PEAK_MARKER}{json.dumps(payload, sort_keys=True)}", flush=True)
++
++
  def main():
      # random seed
 -    fix_seed_list = range(2024, 2024 + configs.itr)
@@ -214,7 +257,7 @@ index 1ce7e61..0fa00c2 100644
  
      configs.use_gpu = True if torch.cuda.is_available() and configs.use_gpu else False
  
-@@ -61,7 +61,8 @@ def main():
+@@ -61,13 +96,15 @@ def main():
              exp.train()
  
              torch.cuda.empty_cache()
@@ -224,8 +267,22 @@ index 1ce7e61..0fa00c2 100644
      else:
          exp = Exp(configs)
          exp.test()
+         torch.cuda.empty_cache()
+ 
+ if __name__ == "__main__":
++    _reset_evipatch_cuda_peak()
+     # warp the codes, such that errors will only be outputted from the main process
+     try:
+         if not configs.sweep:
+@@ -104,3 +141,6 @@ if __name__ == "__main__":
+         if accelerator.is_main_process:
+             logger.exception(f"{e}", stack_info=True)
+             exit(1)
++    finally:
++        if accelerator.is_main_process:
++            _emit_evipatch_cuda_peak()
 diff --git a/models/APN.py b/models/APN.py
-index 4bf549f..04f60db 100644
+index 4bf549fe8f869a4ab7911c17b8686ba7639c6b19..04f60dbd59e917475fca3c478e17e4c3d706f593 100644
 --- a/models/APN.py
 +++ b/models/APN.py
 @@ -6,6 +6,12 @@ import torch.nn.functional as F
@@ -312,7 +369,7 @@ index 4bf549f..04f60db 100644
  
          self.patch_pos_enc = PositionalEncoding(self.hid_dim, max_len=self.P)
 diff --git a/utils/ExpConfigs.py b/utils/ExpConfigs.py
-index 1953bac..952a37d 100644
+index 1953baca027654a3fcb6dcf4b205c0c6b3dfe3e6..952a37d547f49204a56dbe91097c7c56e179070d 100644
 --- a/utils/ExpConfigs.py
 +++ b/utils/ExpConfigs.py
 @@ -173,6 +173,14 @@ class ExpConfigs:
@@ -331,7 +388,7 @@ index 1953bac..952a37d 100644
      f: int = 1
  
 diff --git a/utils/configs.py b/utils/configs.py
-index 998d2ed..c29a74e 100644
+index 998d2ed9e90db74cef72ab778beb0414950fd405..c29a74edd77808398bf25ca3d3dc38f0a545cc34 100644
 --- a/utils/configs.py
 +++ b/utils/configs.py
 @@ -204,6 +204,24 @@ parser.add_argument('--apn_nlayer', type=int, default=2,
@@ -360,7 +417,7 @@ index 998d2ed..c29a74e 100644
  
  # .yaml reference file maintainance
 diff --git a/utils/tools.py b/utils/tools.py
-index 53d9f2c..3fb61d0 100644
+index 53d9f2c5759c78488b95c8092b1df259befaac91..3fb61d09f344e5d6a522319cf66986450c065d5e 100644
 --- a/utils/tools.py
 +++ b/utils/tools.py
 @@ -188,7 +188,7 @@ def test_training_step_time(

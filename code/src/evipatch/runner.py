@@ -7,6 +7,7 @@ import contextlib
 import csv
 import hashlib
 import json
+import math
 import os
 import platform
 import re
@@ -31,6 +32,7 @@ from evipatch.paths import (
 
 DEFAULT_CONFIG = project_path("code", "configs", "stage_a.json")
 EXPECTED_APN_COMMIT = "f0d6eeb7a2ee2d7c76475bf725b7ea25f98af3f4"
+CUDA_PEAK_MARKER = "EVIPATCH_CUDA_PEAK_JSON="
 
 
 def _utc_now() -> str:
@@ -327,6 +329,23 @@ def _query_process_gpu_memory_mib(process_id: int) -> float:
             total += memory
     return total
 
+def _parse_cuda_peak_marker(line: str) -> dict[str, float] | None:
+    _, separator, payload = line.partition(CUDA_PEAK_MARKER)
+    if not separator:
+        return None
+    try:
+        raw = json.loads(payload.strip())
+        parsed = {
+            "allocated_mib": float(raw["allocated_mib"]),
+            "reserved_mib": float(raw["reserved_mib"]),
+        }
+    except (KeyError, TypeError, ValueError, json.JSONDecodeError):
+        return None
+    if any(not math.isfinite(value) or value < 0 for value in parsed.values()):
+        return None
+    return parsed
+
+
 
 def run_checked(
     command: list[str],
@@ -349,6 +368,7 @@ def run_checked(
 
     start_wall = time.perf_counter()
     started_at = _utc_now()
+    child_cuda_peak: dict[str, float] | None = None
     with resolved_log.open("w", encoding="utf-8", newline="") as log_handle:
         process = subprocess.Popen(
             command,
@@ -363,8 +383,12 @@ def run_checked(
         )
 
         def stream_output() -> None:
+            nonlocal child_cuda_peak
             assert process.stdout is not None
             for line in process.stdout:
+                parsed_peak = _parse_cuda_peak_marker(line)
+                if parsed_peak is not None:
+                    child_cuda_peak = parsed_peak
                 log_handle.write(line)
                 log_handle.flush()
                 sys.stdout.write(line)
@@ -381,6 +405,18 @@ def run_checked(
         output_thread.join()
         return_code = int(process.returncode)
 
+    if child_cuda_peak is not None:
+        peak_cuda_allocated_mib = child_cuda_peak["allocated_mib"]
+        peak_cuda_reserved_mib = child_cuda_peak["reserved_mib"]
+        peak_gpu_memory_mib = peak_cuda_allocated_mib
+        gpu_memory_source = "torch.cuda"
+    else:
+        peak_cuda_allocated_mib = None
+        peak_cuda_reserved_mib = None
+        gpu_memory_source = (
+            "nvidia-smi-process" if peak_gpu_memory_mib > 0 else "unavailable"
+        )
+
     result = {
         "argv": command,
         "cwd": str(resolved_cwd),
@@ -389,6 +425,9 @@ def run_checked(
         "ended_at": _utc_now(),
         "wall_seconds": time.perf_counter() - start_wall,
         "peak_gpu_memory_mib": peak_gpu_memory_mib,
+        "peak_cuda_allocated_mib": peak_cuda_allocated_mib,
+        "peak_cuda_reserved_mib": peak_cuda_reserved_mib,
+        "gpu_memory_source": gpu_memory_source,
         "return_code": return_code,
     }
     if return_code != 0:

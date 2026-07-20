@@ -196,6 +196,24 @@ Status: ⬜ TODO / 🔄 WIP / ✅ Done (run-verified) / ❌ Blocked
 - **Validation required before restart**: boundary validation plus the full unit/smoke suite, followed by direct confirmation that the first restarted epoch no longer shows the worker-spawn delay.
 - **How to Run check**: commands remain unchanged; `stage-a` reads the revised boundary-checked config.
 
+## 2026-07-21 02:36 CST — Child-side CUDA peak audit design
+
+- **ResearchPilot phases**: `research[F]-iteration` diagnosed the first completed APN/2024 training manifest; `research[E]-coding` implements the bounded instrumentation fix.
+- **Failure evidence**: training and native evaluation completed, but WDDM exposed no process memory through `nvidia-smi --query-compute-apps`, leaving `peak_gpu_memory_mib=0.0` despite CUDA execution.
+- **Design**: the patched APN child resets CUDA peak counters immediately before `main()`, synchronizes in `finally`, and prints one JSON marker containing `torch.cuda.max_memory_allocated` and `max_memory_reserved` in MiB. This is measurement-only and cannot affect model outputs or optimization.
+- **Runner contract**: `run_checked` parses the child marker and records allocated/reserved peaks plus `gpu_memory_source=torch.cuda`; its existing process-scoped `nvidia-smi` value remains a fallback for generic subprocesses without the marker.
+- **Recovery**: stop before accepting later variants, remove the incomplete Stage A tree, regenerate `patches/apn_evipatch.patch`, run unit/parity/smoke validation, commit the fix, then restart from APN/2024 so every manifest uses the same measurement contract.
+- **How to Run check**: commands remain unchanged; the metric is emitted and captured automatically by every train/evaluate action.
+
+## 2026-07-21 02:50 CST — CUDA peak audit run-verified
+
+- **Targeted regression**: `code/tests/test_runner.py` completed with `5 passed`; child markers override the WDDM fallback and generic subprocesses retain nullable child fields.
+- **Real APN evidence**: a diagnostic native evaluation of the discarded APN/2024 checkpoint reported `31.36474609375 MiB` peak allocated and `48.0 MiB` peak reserved with `gpu_memory_source=torch.cuda` in its manifest.
+- **Patch replay artifact**: regenerated the same 11-file `patches/apn_evipatch.patch`; SHA-256 is `00D8D59221D1580EE2B718365325BD69945DC2C103B0C23D7F93F9365E301746`.
+- **Full validation**: boundary validation, exact APN parity, clean patch replay, evidence/shift/path tests, and the new memory contract completed with `41 passed in 7.88s`.
+- **Recovery completed**: removed only the diagnostic `results/stage_a` and `logs/stage_a` trees after boundary verification; the formal matrix will restart from APN/2024 at the next commit.
+- **How to Run check**: commands are unchanged.
+
 ## Known Issues
 
 - [ ] Official APN repository has no clearly detected top-level license; do not commit or package its source.

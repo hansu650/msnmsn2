@@ -156,7 +156,7 @@ msn2/
 
 `build_apn_command(config: dict, variant: str, action: str, checkpoint: Path | None = None, shift: str = "none", seed: int | None = None) -> list[str]` returns an argument list without shell interpolation.
 
-`run_checked(command: list[str], log_path: Path, env: dict[str, str]) -> dict` runs a process, streams stdout/stderr to a project-local log, records wall time, return code, CUDA metadata, and fails on nonzero exit.
+`run_checked(command: list[str], log_path: Path, env: dict[str, str]) -> dict` runs a process, streams stdout/stderr to a project-local log, records wall time and return code, parses child-reported `torch.cuda` peak allocated/reserved memory, falls back to process-scoped `nvidia-smi` only when the marker is absent, and fails on nonzero exit.
 
 `discover_checkpoints(result_root: Path, variant: str) -> list[Path]` requires exactly one checkpoint per configured seed and sorts by `iterN`.
 
@@ -212,6 +212,7 @@ msn2/
 ### `main.py` and `exp/exp_main.py`
 
 - Build the iteration seed list from `seed_base` while preserving the official 2024 default.
+- Reset `torch.cuda` peak counters immediately before the run and emit one machine-readable allocated/reserved-memory marker in a `finally` block, so Windows WDDM runs retain true child-process CUDA peaks even when `nvidia-smi` omits compute-process memory.
 - Allow the runner to assign a stable evaluation directory name such as `eval_native`, `eval_mcar`, or `eval_burst` within an explicit checkpoint directory.
 - Save `shift_requested` and `shift_actual` arrays when present; the target, target mask, predictions, and sample IDs continue to use the upstream array-saving path.
 
@@ -252,7 +253,7 @@ Before download, the runner verifies that every resolved storage path is inside 
 
 | Artifact | Format | Required fields |
 |---|---|---|
-| `run_manifest.json` | JSON | variant, seed, shift, full command argv, git hashes, environment, GPU, start/end, return code |
+| `run_manifest.json` | JSON | variant, seed, shift, full command argv, git hashes, environment, GPU, peak CUDA allocated/reserved MiB and source, start/end, return code |
 | `metric.json` | JSON | masked MSE, masked MAE |
 | `patients.csv` | CSV | variant, seed, shift, patient ID, MSE, MAE, observed target count |
 | `stage_a_runs.csv` | CSV | per-run metric, timing, parameters, peak memory |
