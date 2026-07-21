@@ -1,0 +1,21 @@
+{
+  "attempt": 5,
+  "track": "Edge Computing, IoT and Digital Twins",
+  "title": "EdgeTwinCal: Dual-Space Calibration for Frozen Irregular-Sensor Digital Twins",
+  "baseline": "APN (AAAI 2026), pre-existing checkpoint trained locally with the released implementation, frozen",
+  "dataset": "PhysioNet 2012",
+  "seeds": [2024, 2025, 2026],
+  "kill_test_seed": 2024,
+  "modules": {
+    "slrh": "Sensor Latent Residual Head on the frozen decoder path",
+    "cfg": "Cross-Forecast Graph after decoding"
+  },
+  "ablations": ["apn", "slrh", "cfg", "full"],
+  "latent_alphas": [100.0, 1000.0, 10000.0],
+  "graph_alphas": [100.0, 1000.0, 10000.0],
+  "pass_rule": {
+    "minimum_relative_mse_improvement": 0.01,
+    "mae_must_not_regress": true,
+    "full_must_match_or_beat_best_single_module": true
+  }
+}

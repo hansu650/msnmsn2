@@ -1,3 +1,47 @@
+<!--
+Modified: 2026-07-21
+Changes: Updated the active EdgeTwinCal route with the formal ablation rerun,
+checkpoint provenance, and exploratory evidence boundary.
+-->
+
+## Current Active Route: EdgeTwinCal
+
+> Status: exploratory three-seed main experiment and mechanism ablation complete.
+
+**Target.** IEEE MSN 2026, track `Edge Computing, IoT and Digital Twins`.
+
+**Question.** Can a frozen channel-independent irregular forecaster be improved
+without backbone retraining by decomposing its residual into sensor-local latent
+information and cross-sensor forecast information?
+
+**Method.** EdgeTwinCal freezes pre-existing checkpoints trained locally with the
+released APN implementation and fits two sequential closed-form modules. The
+Sensor Latent Residual Head (SLRH) reads each sensor's
+APN latent representation on the decoder path. The Cross-Forecast Graph (CFG)
+then predicts the remaining residual from other sensors' intermediate forecasts
+with a zero diagonal. Both ridge penalties are selected on validation only.
+
+**Evidence.** On PhysioNet 2012 across seeds 2024/2025/2026, frozen APN obtains
+MSE 0.312331 +/- 0.000512 and MAE 0.365334 +/- 0.000863. EdgeTwinCal obtains
+MSE 0.309058 +/- 0.000494 and MAE 0.362978 +/- 0.000335, relative improvements
+of 1.048% and 0.645%. SLRH and CFG alone improve MSE by 0.553% and 0.591%.
+A descriptive patient-macro hierarchical paired bootstrap gives full-minus-APN
+MSE -0.003793 with 95% CI [-0.005619, -0.002130].
+
+**Scope.** The manuscript reports only the PhysioNet main experiment and
+APN/SLRH/CFG/full ablation. Values for other methods are quoted from the APN
+paper for context and are not presented as reproduced comparisons. No APN or
+external baseline is retrained. Because five structural attempts inspected the
+same PhysioNet test set, the final route is an exploratory pilot; confirmation
+requires an untouched dataset or holdout. Every paired variant inherits the
+released P12 preprocessing behavior.
+
+**Research questions.** RQ1 asks whether frozen dual-space calibration improves
+the paired APN checkpoints. RQ2 asks whether SLRH and CFG are complementary.
+RQ3 asks how consistently the descriptive gain appears across seeds and patients.
+
+---
+
 # EviPatch Idea and Experiment Report
 > Generated: 2026-07-20 | Status: CONFIRMED_FOR_STAGE_A
 > Scope: idea refinement and experiment design only; no manuscript is generated.

@@ -1,5 +1,29 @@
 # User Requirements
 
+## Current Route Override (2026-07-21)
+
+The latest user instructions supersede the historical EviPatch-only scope below.
+
+- Current method: **EdgeTwinCal**, after five distinct structural attempts on APN.
+- Target track: **Edge Computing, IoT and Digital Twins** at IEEE MSN 2026.
+- Baseline policy: reuse the existing APN (AAAI 2026) checkpoints previously
+  trained locally with the released implementation and keep APN frozen; do not
+  retrain APN or reproduce additional baselines.
+- Experiments: PhysioNet 2012 main result and the APN/SLRH/CFG/full ablation only,
+  with seeds 2024/2025/2026. External comparison values may be quoted from papers.
+- Manuscript: create a concise English IEEE-conference LaTeX draft using the user-
+  supplied `IEEE-conference-template-062824`; the draft need not be polished.
+- Writing example: use the supplied previous `submission.pdf` for structure/style,
+  but do not repeat its visual time-series anomaly-detection topic or Big Data and
+  AI track.
+- Cleanup: remove failed-route code and results created in the current work while
+  preserving the final EdgeTwinCal route and the immutable historical audit.
+- Continue to enforce the `msn2` root boundary and never read/write the sibling
+  `msn` project.
+
+The remaining sections are retained as historical EviPatch requirements and do
+not override this current-route section.
+
 ## Scope
 
 - Project root: `C:\Users\qintian\Desktop\msn2` only.

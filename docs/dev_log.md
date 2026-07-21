@@ -305,3 +305,170 @@ $env:PYTHONPATH = 'C:\Users\qintian\Desktop\msn2\code\src'
 - **`controlled`**: freezes error-blind real-data support pairs from each APN checkpoint/native history and scores identical pair IDs for all variants.
 - **`aggregate`**: produces patient errors, seed summaries, hierarchical paired bootstrap results, and `gate_decision.json` under `artifacts/`.
 - **`package`**: creates the final filtered ZIP and `SHA256SUMS.csv` under `packages/`.
+
+## 2026-07-21 -- New track-aligned attempt series
+
+- **ResearchPilot phases**: re-entered exploration through implementation after the
+  frozen EviPatch `ABANDON` verdict; the current route is documented separately in
+  `docs/dualcross_route.md` so the old audit record remains immutable.
+- **Scope override**: target `Edge Computing, IoT and Digital Twins`; use official
+  frozen APN checkpoints, reproduce no additional baseline, and run only one main
+  experiment plus mechanism ablations. APN remains the baseline for five distinct
+  structural attempts before any possible switch.
+- **Attempt 1**: implemented and tested a 410-parameter shared CorePatch adapter.
+  Its seed-2024 MSE improved only 0.163% (0.312922 to 0.312412), below the frozen
+  1% threshold, so it is recorded as failed rather than promoted.
+- **Iteration diagnosis**: training/validation-only ridge analysis found 1.127%
+  validation improvement from strongly shrunk cross-sensor residual prediction,
+  compared with roughly 0.413% from self-only calibration. No attempt-2 test
+  target was inspected during this design decision.
+- **Attempt 2 frozen design**: DualCross combines CSFI before the frozen decoder
+  and SRG after the decoder. Planned ablations are APN, CSFI, SRG, and CSFI+SRG.
+- **How to Run**: attempt 2 will use a dedicated boundary-checked runner; its exact
+  command is appended only after the implementation passes unit tests.
+
+### 2026-07-21 -- DualCross implementation smoke passed
+
+- **Code**: added an isolated `dualcross` package, a dedicated runner and frozen
+  config. CSFI uses diagonal-masked low-rank attention before a copied frozen APN
+  decoder; SRG fits a directed diagonal-free ridge graph after decoding, with its
+  shrinkage selected only on validation.
+- **Tests**: DualCross plus retained attempt-1 regression tests completed with
+  `7 passed`; coverage includes output shape, zero attention diagonal, finite
+  gradients, decoder freezing/parity, synthetic graph recovery, and root escape.
+- **How to Run**:
+
+  ```powershell
+  $env:PYTHONPATH = 'C:\Users\qintian\Desktop\msn2\code\src'
+  & 'C:\Users\qintian\Desktop\msn2\.conda\envs\evipatch\python.exe' `
+    .\code\scripts\run_dualcross.py --seed 2024
+  ```
+
+### 2026-07-21 -- Five-attempt APN search completed
+
+- **ResearchPilot phases**: `research[F]-iteration` recorded each failure without
+  test-set retuning; `research[B]-idea` and `research[C]-experiment` froze the next
+  structural hypothesis before implementation.
+- **Attempt 2**: DualCross reached a 0.678% seed-2024 MSE reduction but missed the
+  predeclared 1% threshold.
+- **Attempt 3**: the pseudo-observation bridge worsened validation MSE by 8.75%
+  and was terminated before test evaluation.
+- **Attempt 4**: VarGraph's strongest single module reduced MSE by 1.116%, but the
+  combined two-module route achieved only 1.076% and therefore failed the frozen
+  requirement that the complete method beat both ablations.
+- **Attempt 5**: EdgeTwinCal passed the seed-2024 kill-test and then seeds 2025 and
+  2026. The complete ledger, including frozen decision rules, is retained in
+  `docs/dualcross_route.md`.
+
+### 2026-07-21 -- EdgeTwinCal main experiment and ablation frozen
+
+- **ResearchPilot phases**: `research[D]-implementation`, `research[E]-coding`,
+  and `research[F]-iteration` produced a self-contained final package around the
+  unchanged existing checkpoint produced by the official APN implementation.
+- **Modules**: Sensor Latent Residual Head (SLRH) reads frozen per-sensor latents
+  in parallel with the shared decoder; Cross-Forecast Graph (CFG) applies a
+  diagonal-free directed correction after the intermediate forecast. Both are
+  closed-form ridge fits, with penalties selected on validation only.
+- **Main result**: three-seed APN MSE is 0.312331 +/- 0.000512 and EdgeTwinCal MSE
+  is 0.309058 +/- 0.000494, a 1.048% reduction. MAE improves by 0.645%.
+- **Ablation**: SLRH, CFG, and full reduce MSE by 0.553%, 0.591%, and 1.048%,
+  respectively. Full beats both single modules for every reported aggregate MSE.
+- **Inference**: a 10,000-replicate seed-block and patient-level paired bootstrap
+  gives full-minus-APN MSE -0.003793 with 95% CI [-0.005619, -0.002130].
+- **Cost**: the final cached closed-form fits take 1.40--1.42 seconds per seed on
+  one RTX 4090. Each complete audit/ablation state is 0.256 MB.
+- **Cleanup**: deleted only the failed CorePatch, DualCross, and VarGraph source,
+  configs, scripts, tests, and result trees. Historical audit documents and the
+  successful EdgeTwinCal results were preserved; the old `msn` directory was not
+  accessed.
+
+### 2026-07-21 -- IEEE paper draft compiled and visually reviewed
+
+- **ResearchPilot phases**: `research[G.0]-plan` through `research[G.6]-conclusion`
+  produced a concise English draft; `research[G.7]-review` compiled and rendered
+  the supplied IEEE conference format for page-level inspection.
+- **Track framing**: the draft targets `Edge Computing, IoT and Digital Twins` and
+  presents fast recalibration of a frozen irregular-sensor digital twin, rather
+  than repeating the prior Big Data and AI anomaly-detection submission.
+- **Comparison policy**: no additional baseline was reproduced. Published APN,
+  t-PatchGNN, and GraFITi values are clearly labeled as paper-reported context;
+  causal claims use only the paired frozen-checkpoint experiment and ablations.
+- **Artifacts**: source is `docs/manuscripts/paper.tex`, references are in
+  `docs/manuscripts/references.bib`, and the compiled four-page draft is
+  `docs/manuscripts/paper.pdf`. Reproducible figures are generated by
+  `notebooks/figures.ipynb`.
+
+### Current EdgeTwinCal How to Run
+
+```powershell
+$edgeTwinPython = (Resolve-Path '.\.conda\envs\evipatch\python.exe').Path
+$env:PYTHONPATH = (Resolve-Path '.\code\src').Path
+
+# Main experiment and four-way ablation on the existing frozen checkpoint cache.
+& $edgeTwinPython .\code\scripts\run_edgetwincal.py --seed 2024
+& $edgeTwinPython .\code\scripts\run_edgetwincal.py --seed 2025
+& $edgeTwinPython .\code\scripts\run_edgetwincal.py --seed 2026
+
+# Three-seed summary and hierarchical paired bootstrap.
+& $edgeTwinPython .\code\scripts\aggregate_edgetwincal.py
+
+# Final implementation tests.
+& $edgeTwinPython -m pytest -q .\code\tests\test_edgetwincal.py
+
+# IEEE draft (Tectonic downloads only standard TeX assets on first use).
+Set-Location .\docs\manuscripts
+& tectonic paper.tex
+```
+
+### 2026-07-21 -- Formal ablation rerun and APN-aligned manuscript revision
+
+- **ResearchPilot phases**: `research[G.2]-experiments`,
+  `research[G.3]-abstract`, and `research[G.7]-review`; the PDF workflow was
+  used to compare the supplied submission, the official APN paper, and the latest
+  rendered draft.
+- **Rerun**: APN/SLRH/CFG/full were recomputed sequentially for seeds
+  2024/2025/2026 from the frozen feature caches. The three-seed command plus
+  aggregation finished in 15.7 seconds and reproduced every MSE/MAE value.
+- **Ablation visualization**: `notebooks/figures.ipynb` now generates a two-panel
+  figure containing MSE/MAE improvement bars with across-seed error bars and
+  seed-wise paired MSE curves. The exact mean +/- standard deviation values remain
+  in Table II.
+- **Baseline alignment**: Table I now mirrors APN Table 2's mean +/- standard
+  deviation convention, separates published five-seed context from our paired
+  evaluation, and includes Warpformer, t-PatchGNN, GraFITi, and APN without
+  reproducing them.
+- **Provenance correction**: the reused APN artifacts are described as pre-existing
+  checkpoints trained locally with the released implementation, not checkpoints
+  published by APN's authors.
+- **Protocol disclosure**: the draft records the released P12 implementation's
+  approximate 81/9/10 split, train/validation drop-last, and full-data
+  standardization. All four paired variants inherit the same behavior.
+- **Review correction**: because five structural routes inspected the same test
+  set, the study is labeled exploratory; the patient-macro bootstrap estimand is
+  distinguished from target-micro MSE, and edge-device claims are removed.
+- **Paper output**: the revised four-page IEEE PDF compiles without overfull boxes.
+
+### 2026-07-21 -- EdgeTwinCal final consistency check
+
+- **Metadata**: result manifests now distinguish 3,888 free CFG coefficient slots
+  from 3,886 nonzero fitted coefficients and identify the checkpoint provenance
+  accurately.
+- **Regression**: the final EdgeTwinCal tests completed with `4 passed in 1.65s`;
+  all JSON and Notebook artifacts parse successfully.
+- **PDF verification**: the latest `paper.pdf` is a four-page US-letter document;
+  every page was rendered after the final edit and no clipping, overlap, or
+  overfull box remains. The byte-identical delivery copy is
+  `output/pdf/EdgeTwinCal_draft.pdf`.
+- **Repository check**: `git diff --check` passed and all failed-route source and
+  result directories remain absent.
+
+### 2026-07-21 -- GitHub synchronization bundle prepared
+
+- **Current route**: updated the repository landing page to make EdgeTwinCal the
+  active project while retaining EviPatch only as a historical negative audit.
+- **Baseline provenance**: added `docs/baselines/APN_AAAI2026.md` with the
+  official article, publisher PDF, DOI, GitHub repository, and pinned commit.
+- **Versioned deliverables**: final source, tests, configuration, compact
+  three-seed CSV/JSON results, patient-level paired data, figures, Notebook,
+  IEEE source/template/class/bibliography, and compiled draft are selected.
+- **Deliberate exclusions**: publisher-owned APN PDF, complete `vendor/APN`
