@@ -3,6 +3,7 @@
 
 # Baseline source and generated data
 vendor/APN/
+vendor/gru_ode_bayes/
 code/data/
 data/
 datasets/

@@ -472,3 +472,459 @@ Set-Location .\docs\manuscripts
   three-seed CSV/JSON results, patient-level paired data, figures, Notebook,
   IEEE source/template/class/bibliography, and compiled draft are selected.
 - **Deliberate exclusions**: publisher-owned APN PDF, complete `vendor/APN`
+  checkout, local caches/checkpoints/data/environments, private absolute paths,
+  and secrets. (This continuation repairs the previously truncated final line;
+  no historical entry was rewritten.)
+
+### 2026-07-21 -- Confirmatory lab handoff accepted and M0 audited
+
+- **ResearchPilot phases**: entered research[D]-implementation, followed by
+  research[E]-coding and research[F]-iteration only after the active design is
+  frozen. No manuscript rewrite is authorized by the handoff.
+- **Authority**: the read-only
+  EdgeTwinCal_Lab_Experiment_Handoff_20260721 bundle was verified 18/18 against
+  SHA256SUMS.txt. Its protocol now supersedes the earlier three-seed pilot scope.
+- **Isolation**: all writes remain under msn2; the sibling msn, HOME, and
+  CODEX_HOME remain untouched. Work continues on branch
+  lab/msn2026-full-benchmark.
+- **Cancelled download**: removed the assistant-created ignored cache file
+  cache/reference_papers/APN_AAAI2026.pdf after the user said no download was
+  needed. The official source remains linked; no publisher PDF is committed.
+- **Assets**: P12 data and APN checkpoints 2024--2026 are present. Seeds
+  2027/2028, HumanActivity, USHCN, MIMIC-III, and real edge hardware are absent
+  and are recorded as BLOCKED until legally/physically available.
+- **Environment**: Python 3.11.13, PyTorch 2.6.0+cu124, CUDA available on one RTX
+  4090. APN is pinned at f0d6eeb7a2ee2d7c76475bf725b7ea25f98af3f4.
+- **Legacy G0 evidence**: existing five EdgeTwinCal tests passed in 1.82 s.
+  Cache predictions/targets/masks/sample IDs match saved outputs exactly, and
+  recomputed APN metrics differ by at most 5.55e-17. The runner was deliberately
+  not called because it overwrites legacy outputs.
+- **Handoff hash note**: project compact results use CRLF and handoff references
+  use LF. After newline normalization all four files are text-identical; no
+  result drift exists.
+- **Protocol repairs**: fixed the active requirements/idea/design boundary,
+  separated legacy_v1 from msn2026_v1, defined correct CFG anchor/source
+  semantics, restricted crossed inference to reliable group IDs, split harmful
+  from safety-inconclusive, and renamed legacy pass semantics conceptually.
+- **Implementation plan**: FIX-01 config and FIX-06 schema first, then cache
+  provenance, strict split/normalization, generic ridge and controls, segmented
+  timing, crossed inference, complete pre-test gate, frozen registry, and only
+  then once-only test evaluation.
+
+### Confirmatory campaign How to Run (pre-test phase)
+
+```powershell
+$edgeTwinPython = (Resolve-Path ''.\.conda\envs\evipatch\python.exe'').Path
+$env:PYTHONPATH = (Resolve-Path ''.\code\src'').Path
+
+# Safe pre-test suite. This must pass before any confirmatory test command exists.
+& $edgeTwinPython -m pytest -q .\code\tests\test_edgetwincal.py
+
+# The msn2026_v1 commands will require one resolved config and a frozen protocol
+# ledger. Until FIX-01--06 are implemented and G0/G1 pass, do not open new test.
+```
+
+### 2026-07-21 -- FIX-01 through FIX-06 foundation and mechanism controls
+
+- **FIX-01 / configuration**: added code/configs/msn2026/default.json and
+  edgetwincal/config.py. The only overrides are registered dataset/seed/variant
+  selectors; paths, five seeds, six-point ridge grids, protocols, variants,
+  bootstrap, timing, and gates are locked. Current default config SHA256 is
+  6228502eacd2bbce02621281a2e8e8056728afc7629b28cd5424ed154d2a7e35.
+- **FIX-06 / run schema**: added edgetwincal/schema.py with atomic
+  created/running/complete/failed manifests, required-file hashing, and fail-
+  closed aggregation eligibility.
+- **FIX-02 / provenance**: added edgetwincal/provenance.py with every handoff key
+  field, digest filenames, payload hash/length, exact stale comparison, partial
+  and corrupt rejection, a scoped lock, and same-directory atomic replacement.
+  Sixty-four mutation/corruption tests passed.
+- **FIX-03 / protocol**: added edgetwincal/protocol.py with salted deterministic
+  group splits, train-only observed normalizers, privacy-safe manifests, and
+  USHCN station-overlap audit. Six synthetic leakage tests passed without
+  loading a real test split.
+- **Shared ridge semantics**: added ridge.py and refactored latent.py. Feature
+  scales use a 1e-6 floor; intercepts are unpenalized; validation micro MSE
+  chooses one alpha globally.
+- **CFG semantic fix**: archived the coupled legacy implementation as
+  legacy_graph_v1.py. The active graph.py accepts separate base_to_correct and
+  source_forecasts. Full therefore uses an SLRH anchor with frozen APN sources.
+- **Controls**: added controls.py, joint.py, shuffle.py, and variants.py for
+  Bias-only, Self-affine, Reverse, complete 6x6 Joint, Full-Diagonal with exact
+  SLRH reuse, CrossShuffle, and LatentShuffle. The P12 Joint coefficient-slot
+  invariant is 6,480.
+- **V03**: added decoder_refit.py. Each of the six AdamW LR x weight-decay
+  candidates restarts from the identical checkpoint; only exact decoder names
+  are trainable and every non-decoder tensor/buffer is byte-checked.
+- **FIX-05**: added timing.py with CPU/CUDA labels, synchronization boundaries,
+  phase records, warm inference, and serialized-state measurement.
+- **FIX-04**: added statistics.py with SSE/SAE/N cells, pooled micro metrics,
+  shared-multiplicity crossed group x checkpoint bootstrap, Holm adjustment,
+  and distinct harmful versus safety-inconclusive labels.
+- **Once-only test guard**: added campaign.py. A persisted frozen ledger must
+  commit config, registries, manifests, code, statistics, timing, patch, and
+  environment hashes before it can issue a one-use test token.
+- **Tests so far**: mechanism controls 8 passed; statistics/timing 8 passed;
+  campaign ledger 3 passed; APN upstream/patched parity passed at atol 1e-8 and
+  rtol 1e-7. All work used synthetic or legacy-parity inputs; no new test split
+  was opened.
+
+
+### 2026-07-21 -- Strict USHCN protocol preparation
+
+- Added `edgetwincal/strict_ushcn.py`. It audits the official TSDM/APN fold-0
+  station keys, preserves a group-disjoint official fold, and otherwise applies
+  the locked salted-SHA256 floor 80/10/remainder station repair.
+- Value normalization is fitted only from finite observations belonging to
+  frozen training stations. APN's `seq_len=150` task boundary is retained as a
+  `149.5` cutoff, times use the task-compatible frozen global-time-maximum
+  transform, and exactly the next three irregular rows form the forecast target.
+- Public audit, split, normalization, time, dataset, and ledger manifests contain
+  salted station hashes and counts only. Strict test construction requires a
+  token binding the frozen registry, fold audit, split, normalizer, and time
+  scale hashes.
+- Added eight synthetic tests covering official-fold retention, deterministic
+  overlap repair, station non-overlap, train-only statistics, test-extreme
+  invariance, APN slicing, frozen-token enforcement, and raw-ID exclusion. The
+  combined protocol/P12/USHCN strict suite passes 21 tests. No vendor task was
+  instantiated, no dataset was read, and no real test split was opened.
+
+#### Strict USHCN How to Run (synthetic pre-test only)
+
+```powershell
+$edgeTwinPython = (Resolve-Path '.\.conda\envs\evipatch\python.exe').Path
+$env:PYTHONPATH = (Resolve-Path '.\code\src').Path
+& $edgeTwinPython -m pytest -q -p no:cacheprovider `
+  .\code\tests\test_edgetwincal_protocol.py `
+  .\code\tests\test_edgetwincal_strict_p12.py `
+  .\code\tests\test_edgetwincal_strict_ushcn.py
+```
+### 2026-07-21 -- Active control plane, phase caches, and data acquisition
+
+- **Legacy isolation**: moved the exploratory runner/runtime/aggregator behind
+  explicit `legacy_*_v1` modules. The active CLI is config-driven and provides
+  audit, ledger create/freeze, status, explicit-registry aggregation, and a
+  token-gated evaluator boundary. The evaluator remains fail-closed until the
+  real campaign integration is complete.
+- **Train/validation-only APN trainer**: added a project-owned deterministic
+  Adam trainer with the released APN scheduler, masked micro-MSE validation,
+  patience 10, atomic best-state writes, curve/timing/CUDA manifests, and no
+  test-loader argument.
+- **Phase-separated schema-3 caches**: the active runtime now supports a
+  train+validation fit cache before protocol freeze and a separate test cache
+  only after the once-opened campaign gate. The combined three-split form
+  remains accepted solely for complete parity/audit bundles. Arbitrary partial
+  split sets are rejected.
+- **Regression repair**: fixed the accidental indentation of the explicit CFG
+  source forecasts in the legacy unit test; the original five tests pass again.
+  The active --help test now checks that module state is unchanged rather than
+  incorrectly assuming no earlier parity test imported APN in the same process.
+- **Public assets**: downloaded and verified HumanActivity from the UCI URL
+  pinned by APN (25 participant records; loader MD5 matched) and USHCN from the
+  pinned GRU-ODE-Bayes source (raw SHA256
+  `671eb8d121522e98891c84197742a6c9e9bb5015e42b328a93ebdf2cfd393ecf`,
+  semantic shape 350665 x 5). The local USHCN parquet byte hash differs from
+  the old reference because parquet serialization is version-dependent; raw
+  identity and semantic shape are therefore recorded separately.
+- **Authorized MIMIC acquisition**: after the user confirmed access authority,
+  downloaded only the nine GRU-ODE-Bayes-required MIMIC-III v1.4 tables from
+  the specified Hugging Face mirror into ignored project storage. Their headers
+  and standard row counts match v1.4 (for example LABEVENTS 27,854,055 data
+  rows and INPUTEVENTS_MV 3,618,991), and every file has a local SHA256 record.
+- **MIMIC fail-closed finding**: the upstream DataMerging notebook additionally
+  consumes a saved `UNIQUE_ID_dict.csv` created by an unseeded random shuffle.
+  It is absent from APN, GRU-ODE-Bayes, and the mirror. A deterministic strict
+  derivative may be built, but it cannot be labeled released-code parity unless
+  the final APN reference shape and SHA256 both match.
+
+
+### 2026-07-21 -- Frozen multi-seed campaign runner integrated
+
+- **ResearchPilot phases**: research[E]-coding implemented the frozen campaign
+  boundary; research[F]-iteration exercised release and strict synthetic
+  campaigns and repaired state-replay and CLI exit contracts.
+- **Pre-test manifests**: `campaign_pretest.prepare_pretest_manifests` writes
+  protocol, split, and normalizer manifests without constructing test data.
+  `fit_and_freeze_registry` consumes only explicit schema-3 train/validation
+  caches, fits the selected variants sequentially, stores tensor/primitive state
+  with `torch.save`, and binds the total fitted-registry SHA256 for the ledger.
+- **Backbone/cache boundary**: `campaign_extract.prepare_fit_cache` either loads
+  the registered APN checkpoint or runs the train/validation-only APN trainer,
+  then extracts exactly `train` and `val`. Its API exposes no test loader,
+  split selector, or test token.
+- **Once-only evaluation**: `campaign_evaluate.extract_test_cache_after_open`
+  requires an active ledger token before constructing a test loader and writes a
+  token-bound access sidecar. `evaluate_campaign_once` hash-verifies every
+  fitted seed/state before accepting the token, evaluates all seeds and variants
+  sequentially under one opening, records every unrun cell on failure, and
+  closes the opening only after the whole campaign or a consumed-test failure.
+- **Strict adapter**: generic `FrozenAPNTestLedgerToken` openings are converted
+  to the dataset-specific P12/USHCN token only after the prepared strict public
+  split/normalizer manifests and their ledger hashes match.
+- **Controls**: strict P12/USHCN state replay covers APN, SLRH, CFG, Full, V01,
+  V02, V03, V07, V08, V10, V11, and V12. V03 uses the exact cached APN decoder
+  topology and safe `weights_only=True` reload.
+- **CLI**: active `experiment.py` now exposes `pretest prepare`, `pretest
+  fit`, and complete multi-seed `evaluate`; missing fitted/test registries
+  return the explicit artifacts-required exit code without consuming test data.
+- **Validation**: the focused APN bridge/trainer/campaign/runtime/strict suite
+  passed 57 tests; the complete project suite passed 231 tests in 20.28 seconds.
+  The real APN checkout already exists at the pinned commit
+  `f0d6eeb7a2ee2d7c76475bf725b7ea25f98af3f4`, so it was not downloaded again.
+
+#### Frozen campaign How to Run
+
+```powershell
+$edgeTwinPython = (Resolve-Path '.\.conda\envs\evipatch\python.exe').Path
+$env:PYTHONPATH = (Resolve-Path '.\code\src').Path
+$config = '.\code\configs\msn2026\default.json'
+
+# 1. Create public protocol/split/normalizer manifests without opening test.
+& $edgeTwinPython -m edgetwincal.experiment pretest prepare `
+  --config $config --dataset USHCN --seed 2024 `
+  --dataset-id USHCN --protocol-id release_parity --preparation-seed 2024
+
+# 2. After project-owned train/validation cache extraction, fit every selected
+# seed and variant from the explicit entries file and freeze their states.
+& $edgeTwinPython -m edgetwincal.experiment pretest fit `
+  --config $config --dataset USHCN `
+  --dataset-id USHCN --protocol-id release_parity `
+  --entries .\results\edgetwincal_msn2026_v1\protocol\USHCN\release_parity\fit_entries.json `
+  --output .\results\edgetwincal_msn2026_v1\protocol\USHCN\release_parity\fitted_registry.json `
+  --device cpu
+
+# 3. Create/freeze the ledger with the fitted registry SHA, open the cell once,
+# and extract each seed's test cache through extract_test_cache_after_open.
+# The token is passed in memory/CLI only and is never persisted in run artifacts.
+
+# 4. Evaluate the complete frozen seed registry sequentially and consume opening.
+& $edgeTwinPython -m edgetwincal.experiment evaluate `
+  --ledger .\results\edgetwincal_msn2026_v1\protocol\protocol_ledger.json `
+  --cell-id 'USHCN|release_parity|fold-0' --token '<ONCE_ONLY_TOKEN>' `
+  --fitted-registry .\results\edgetwincal_msn2026_v1\protocol\USHCN\release_parity\fitted_registry.json `
+  --test-cache-registry .\results\edgetwincal_msn2026_v1\protocol\USHCN\release_parity\test_cache_registry.json `
+  --device cpu
+
+# Regression suite used for the integration freeze.
+& $edgeTwinPython -m pytest code\tests -q -p no:cacheprovider
+```
+
+
+### 2026-07-21 -- Frozen train/validation fit-cache campaign control plane
+
+- **ResearchPilot phases**: research[E]-coding added an isolated orchestration
+  layer; research[F]-iteration verified strict cache reuse, provenance drift
+  rejection, partial-artifact failure, deterministic ordering, and the absence
+  of a test-construction surface.
+- **Files**: added `code/src/edgetwincal/fit_cache_campaign.py`,
+  `code/scripts/prepare_edgetwincal_fit_caches.py`, and
+  `code/tests/test_edgetwincal_fit_cache_campaign.py`. The existing campaign
+  runner and backbone campaign were not modified.
+- **Backbone contract**: every cache cell reuses
+  `backbone_campaign.prepare_cell`, the exact frozen `pytorch_model.bin`,
+  `configs.yaml`, and `train_manifest.json`. Both the 22 newly trained
+  manifests and three legacy-imported P12 manifests enter through the same
+  `validate_reusable_checkpoint` contract; there is no legacy cache shortcut.
+- **Real provenance**: schema-3 cache manifests bind the current project HEAD,
+  composite raw-data and processed-data hashes, and composite loader/extractor
+  source hashes. Composite hashes include stable project-relative paths, file
+  sizes, and individual SHA256 values.
+- **Isolation and determinism**: all paths pass the msn2 root guard. The wrapper
+  establishes `CUBLAS_WORKSPACE_CONFIG=:4096:8` before importing APN/PyTorch
+  runtime code and rejects a conflicting value.
+- **No-test boundary**: execution constructs only `train` and `val` through
+  the existing fit-loader runtime, then calls
+  `campaign_extract.prepare_fit_cache(train_backbone=False)`. The module has
+  no test-loader or test-ledger-token API. MIMIC-III release parity remains
+  explicitly `BLOCKED[missing_author_mapping]`.
+- **Reuse semantics**: a complete per-seed control manifest commits the frozen
+  assets, provenance, cache envelope, cache sidecar, payload hash, and manifest
+  digest. Reuse re-reads and hash-validates the schema-3 payload. Any source,
+  dataset, checkpoint, config, manifest, sidecar, or cache drift fails closed;
+  orphan cache files are never overwritten.
+- **Pretest handoff**: after all five frozen seeds of a cell are ready, the
+  control plane writes exactly `{"entries": [...]}` to the cell-local
+  `fit_entries.json`, directly consumable by `experiment pretest fit`.
+- **Validation**: focused tests passed `6 passed in 1.91s`; the safe wrapper
+  `--help` and a read-only reordered-seed plan both returned exit code 0.
+  Neither validation command used `--execute`, so no real cache extraction or
+  test access occurred.
+- **Resource estimate**: expected aggregate cache storage is approximately
+  1.0--1.2 GiB for 25 cells (P12 dominates); allow 1.5 GiB free space for
+  envelopes and temporary atomic writes. Expected sequential extraction time on
+  the RTX 4090 is roughly 45--90 minutes, with actual time dependent on
+  HumanActivity padding and disk hashing.
+
+#### Fit-cache Campaign How to Run
+
+```powershell
+$edgeTwinPython = (Resolve-Path '.\.conda\envs\evipatch\python.exe').Path
+
+# Read-only 25-cell plan: five datasets/protocol cells x five seeds.
+& $edgeTwinPython .\code\scripts\prepare_edgetwincal_fit_caches.py
+
+# Full sequential extraction/reuse campaign. This includes P12 release/strict,
+# USHCN release/strict, and HumanActivity release; MIMIC is deliberately absent.
+& $edgeTwinPython .\code\scripts\prepare_edgetwincal_fit_caches.py `
+  --dataset P12 --dataset USHCN --dataset HumanActivity `
+  --protocol release_parity --protocol strict_p12 --protocol strict_ushcn `
+  --seed 2024 --seed 2025 --seed 2026 --seed 2027 --seed 2028 `
+  --device cuda:0 --execute
+
+# Validation-only reuse audit after extraction; missing cache is BLOCKED and
+# every existing cache is rehashed.
+& $edgeTwinPython .\code\scripts\prepare_edgetwincal_fit_caches.py `
+  --dataset P12 --dataset USHCN --dataset HumanActivity `
+  --protocol release_parity --protocol strict_p12 --protocol strict_ushcn `
+  --seed 2024 --seed 2025 --seed 2026 --seed 2027 --seed 2028 `
+  --device cuda:0 --reuse-only --execute
+
+# Example direct handoff into pretest fitting for one complete cell.
+$env:PYTHONPATH = (Resolve-Path '.\code\src').Path
+& $edgeTwinPython -m edgetwincal.experiment pretest fit `
+  --dataset-id P12 --protocol-id release_parity `
+  --entries .\results\edgetwincal_msn2026_v1\protocol\P12\release_parity\fit_entries.json `
+  --output .\results\edgetwincal_msn2026_v1\protocol\P12\release_parity\fitted_registry.json `
+  --device cpu
+
+# Focused regression suite.
+& $edgeTwinPython -m pytest `
+  .\code\tests\test_edgetwincal_fit_cache_campaign.py `
+  -q -p no:cacheprovider
+```
+
+
+### 2026-07-21 -- APN backbone train/validation control plane and legacy import
+
+- **ResearchPilot phases**: research[E]-coding implemented the isolated
+  train/validation control plane; research[F]-iteration added real-manifest
+  reconstruction, fail-closed reuse, deterministic CUDA auditing, and the
+  verified legacy compatibility path.
+- **Files**: added code/src/edgetwincal/backbone_campaign.py,
+  code/scripts/run_edgetwincal_backbones.py, and
+  code/tests/test_edgetwincal_backbone_campaign.py.
+- **Matrix**: the ordered default covers P12 release/strict, USHCN
+  release/strict, and HumanActivity release for seeds 2024--2028. MIMIC-III
+  release remains BLOCKED[missing_author_mapping] until the released author
+  UNIQUE_ID_dict.csv exists.
+- **No-test boundary**: preparation and training expose only train/validation
+  APIs; production code contains no test-loader call. Every control artifact
+  records test_constructed=false. Legacy verification constructs no loader at
+  all and records loaders_constructed=false.
+- **Checkpoint reuse**: native checkpoints must pass
+  validate_reusable_checkpoint, including exact config content/hash, argv,
+  Adam/MSE/epoch/patience policy, and atomic weights-only checkpoint identity.
+  An orphan checkpoint, manifest, config, control file, or log is never
+  overwritten.
+- **Legacy P12 compatibility correction**: release-parity seeds 2024--2026 are
+  imported as verified_legacy_import, not retrained and not represented by a
+  fabricated new train_manifest.json. Each proof pins the copied checkpoint,
+  copied configs.yaml, original Stage A train manifest, original training log,
+  official train-only argv, successful process record, and project/APN/patch/
+  Python/PyTorch/CUDA/GPU provenance.
+- **Unified downstream API**:
+  validate_frozen_checkpoint_identity(config=..., cell=..., seed=...,
+  checkpoint_path=..., train_manifest_path=None, configs_yaml_path=None) is
+  read-only. Native results use verification_mode=native_train_manifest;
+  legacy P12 results require the sibling verified_legacy_import.json, recompute
+  the complete source proof, and use
+  verification_mode=verified_legacy_import. Cache preparation must use this
+  API rather than require a sibling native train manifest unconditionally.
+- **Real reuse-only audit**: P12 release seeds 2024, 2025, and 2026 all returned
+  verified_legacy_import twice with checkpoint SHA256 values
+  927b3e540b7450d37897fd1a78dbbbaa1ff93152d1456c350d22f9f1cc41e3d4,
+  945ef93c856c73ef59a39d6c27baaf7599cbebff9b42b55b45381ac255ed6bb9,
+  and
+  36303d6b1f2fa449e35e93bb9bfcc7446641a78580367a97c9c45847117ac641.
+  No training or test access occurred and no new train manifest was created.
+- **Validation**: py_compile passed; the backbone plus fit-cache combination
+  passed 15 tests, the related runtime/bridge/trainer/strict/cache group passed
+  62 tests, and the full EdgeTwinCal selection passed 185 tests with 62
+  deselected. The only warning was pytest's inability to update its optional
+  root cache; test execution itself passed.
+
+#### Backbone Campaign How to Run
+
+~~~powershell
+$edgeTwinPython = (Resolve-Path '.\.conda\envs\evipatch\python.exe').Path
+
+# Read-only ordered plan; imports no APN or dataset module and starts no training.
+& $edgeTwinPython .\code\scripts\run_edgetwincal_backbones.py
+
+# Audit the three pinned legacy P12 release checkpoints. This may create or
+# validate only verified_legacy_import.json and backbone_campaign_manifest.json.
+& $edgeTwinPython .\code\scripts\run_edgetwincal_backbones.py --dataset P12 --protocol release_parity --seed 2024 --seed 2025 --seed 2026 --execute --reuse-only
+
+# Focused regression, including native/legacy unified identity verification.
+$env:PYTHONPATH = (Resolve-Path '.\code\src').Path
+& $edgeTwinPython -m pytest .\code\tests\test_edgetwincal_backbone_campaign.py .\code\tests\test_edgetwincal_fit_cache_campaign.py -q -p no:cacheprovider
+~~~
+
+### 2026-07-21 -- Unified backbone identity integrated into fit-cache extraction
+
+- Replaced the fit-cache control plane's unconditional sibling
+  `train_manifest.json` requirement with the read-only
+  `validate_frozen_checkpoint_identity` API.
+- The 22 native checkpoints still require and validate their original training
+  manifests. P12 release seeds 2024--2026 instead revalidate
+  `verified_legacy_import.json` plus the pinned Stage A manifest, log,
+  checkpoint, config, APN patch, and runtime provenance; no replacement
+  training manifest is created.
+- No loader or test split was constructed during this integration.
+- `py_compile` passed and the combined backbone/fit-cache regression suite
+  passed 15/15.
+
+### 2026-07-21 -- Sealed confirmatory return, gate decision, and package
+
+- **ResearchPilot phases**: research[E]-coding supplied the closed result/report
+  and deterministic packaging entrypoints; research[F]-iteration audited the
+  crossed statistics, gate semantics, zero-target handling, failure mechanism,
+  workbook formulas, and archive verification. No paper-writing phase was
+  entered.
+- **Closed experiment state**: five runnable cells are complete:
+  HumanActivity release 20/20, P12 release 20/20, USHCN release 20/20,
+  strict P12 60/60, and strict USHCN 60/60. All five ledgers contain exactly
+  one closed opening, are sealed, and record token_persisted=false.
+- **Pre-test evidence**: G0 and G1 are PASS in every cell. The terminal audit
+  rehashed every referenced check and all 180 explicit run manifests.
+- **Statistical correction**: globally empty P12 target groups are retained in
+  raw SSE/SAE/N but excluded from crossed multiplicities. Strong classification
+  is assigned only after Holm and requires the primary adjusted p below .05;
+  MAE safety takes precedence. Intervals remain raw percentile 95% CIs while
+  Holm applies only to one-sided bootstrap p-values.
+- **Formal result**: G2 FAIL, strict G3 FAIL (P12 strong, USHCN harmful),
+  release broad-scope FAIL, and G4 BLOCKED without a real edge target. The
+  machine verdict is ABANDON.
+- **Failure diagnosis**: train/validation replay shows P12 APN/Full validation
+  MSE 0.309850/0.307801, while USHCN shows 1.010812/0.548789 on only 334
+  effective targets per checkpoint. A few heavy-tailed groups dominate the
+  apparent USHCN validation gain; the unbounded correction reverses on the
+  sealed test. State/cache/checkpoint hashes and replay invariants pass, so this
+  is selection/generalization failure rather than implementation drift.
+- **Stop rule**: this is the fifth APN structural route. Same-test retuning and a
+  sixth APN route are prohibited. Future work must switch baseline and use a
+  new independent target.
+- **Artifacts**: `lab_report.py` and `render_edgetwincal_results.py` generate
+  `gate_decision.json`, `failure_diagnosis.json`, the Chinese `REPORT_CN.md`,
+  two SVGs, and provenance. `build_edgetwincal_tables.mjs` uses
+  `@oai/artifact-tool` to generate four CSVs and a five-sheet XLSX. The workbook
+  render/inspect pass covered every sheet and found zero formula errors.
+- **Packaging**: `package.py` uses a closed whitelist, rejects data/environments/
+  caches/checkpoints/NPZ/PT/PDF/vendor/manuscripts/secrets/private absolute
+  paths and files over 100 MB, writes deterministic ZIP metadata, and verifies
+  CRC plus every member SHA256.
+
+#### Sealed lab return How to Run
+
+```powershell
+$edgeTwinPython = (Resolve-Path '.\.conda\envs\evipatch\python.exe').Path
+$env:PYTHONPATH = (Resolve-Path '.\code\src').Path
+
+& $edgeTwinPython .\code\scripts\render_edgetwincal_results.py
+& $edgeTwinPython -m pytest .\code\tests -q -p no:cacheprovider
+& $edgeTwinPython .\code\scripts\package_edgetwincal.py
+```
+
+The table builder additionally requires the Codex bundled Node runtime with a
+local `node_modules` junction containing `@oai/artifact-tool`. It is executed
+from an ignored project-local QA directory and writes the final CSV/XLSX files
+directly under `artifacts/edgetwincal_msn2026_v1/analysis`.

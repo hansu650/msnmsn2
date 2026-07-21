@@ -1,6 +1,52 @@
 # User Requirements
 
-## Current Route Override (2026-07-21)
+## Current Lab Handoff Override (2026-07-21, latest)
+
+The user-provided directory
+`C:\Users\qintian\Downloads\EdgeTwinCal_Lab_Experiment_Handoff_20260721`
+is the current experiment contract. It is read-only input; every generated file
+must remain under `C:\Users\qintian\Desktop\msn2`. This section supersedes both
+the earlier EdgeTwinCal pilot scope and the historical EviPatch scope below.
+
+- Work in the current Codex task and on an isolated Git branch; do not create a
+  second task, do not touch the sibling `Desktop\msn`, and do not set `HOME` or
+  `CODEX_HOME`.
+- Keep APN at upstream commit
+  `f0d6eeb7a2ee2d7c76475bf725b7ea25f98af3f4`. APN is the only locally evaluated
+  backbone. Values for other methods come only from APN Table 2 and are labeled
+  as reported; APN Table 3 is neither copied nor reproduced.
+- Treat the existing three-checkpoint P12 result as an exploratory pilot. Before
+  opening any new test split, implement and pass FIX-01 through FIX-06, freeze
+  configs/splits/normalizers/variant registry/alpha grids/statistics, and record
+  the freeze hashes.
+- Run release-parity and leakage-controlled campaigns separately. Strict P12 and
+  USHCN are mandatory when assets exist; HumanActivity should use participant-
+  held-out folds; MIMIC-III is `BLOCKED` without legal authorization.
+- Target five paired APN checkpoints (2024--2028). Run APN/SLRH/CFG/Full on every
+  runnable release campaign. On strict P12 and USHCN also run the predeclared
+  controls V01, V02, V03, V07, V08, V10, V11, and V12.
+- Preserve the intended sequential semantics: SLRH corrects frozen APN forecasts;
+  CFG then corrects the SLRH output while its zero-diagonal features remain other-
+  sensor frozen APN forecasts. Ridge intercepts are unpenalized and one global
+  alpha is selected per dataset/checkpoint/variant on validation micro MSE from
+  `{1,10,100,1000,10000,100000}`.
+- New test data is opened once only after the G0/G1 pre-test gates pass. Test data
+  is never used for tuning, route selection, or protocol repair.
+- Statistical inference uses group x checkpoint crossed paired bootstrap with
+  50,000 draws and seed 20260721, paired multiplicities across variants, effect
+  sizes/95% intervals, and Holm correction for declared families.
+- Report segmented timing truthfully. CPU closed-form solves must not be labeled
+  GPU work. Edge claims require a real edge CPU/Jetson measurement; the desktop
+  RTX 4090 is not an edge substitute. Unavailable hardware is `BLOCKED` and the
+  claim is narrowed.
+- No paper conclusion rewrite is part of this handoff. Deliver the audited lab
+  return package only, excluding datasets, caches, checkpoints, NPZ files,
+  `vendor/APN`, PDFs, environments, secrets, and private absolute paths.
+- Missing HumanActivity/USHCN/MIMIC assets and seeds 2027/2028 are blockers, not
+  permission to invent results. Complete all runnable work and record each
+  unavailable cell explicitly.
+
+## Earlier EdgeTwinCal Pilot Override (2026-07-21, superseded)
 
 The latest user instructions supersede the historical EviPatch-only scope below.
 

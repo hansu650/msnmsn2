@@ -1,0 +1,80 @@
+{
+  "campaign": "edgetwincal_msn2026_v1",
+  "files": [
+    {
+      "bytes": 88314,
+      "path": "artifacts/edgetwincal_msn2026_v1/analysis/confirmatory_aggregate.json",
+      "sha256": "ee76eca32f48f0aa2ff34739f732ea67415f83bd973bf8727c145d495a0b0c6f"
+    },
+    {
+      "bytes": 17003,
+      "path": "artifacts/edgetwincal_msn2026_v1/analysis/manifest_registry.json",
+      "sha256": "aef9b9c5b65c9b101c5828a49ab590228a4f229688b72ec151d2bfc34d64ca69"
+    },
+    {
+      "bytes": 1039,
+      "path": "artifacts/edgetwincal_msn2026_v1/analysis/blockers.json",
+      "sha256": "1d62652be14eae0bb431ddab2ab9269d4eee818338fe6ddb78ff237437126d36"
+    },
+    {
+      "bytes": 6151,
+      "path": "artifacts/edgetwincal_msn2026_v1/analysis/pretest_terminal_summary.json",
+      "sha256": "b67bb5b741150dfe91e8dabc6151d73d0ef591a972f757e9500a25eb3c597c89"
+    },
+    {
+      "bytes": 2411,
+      "path": "artifacts/edgetwincal_msn2026_v1/analysis/gate_decision.json",
+      "sha256": "51533453e5c687e1fb0c5227d749012206f3342e44ebb31268e56691fd41101e"
+    },
+    {
+      "bytes": 116120,
+      "path": "artifacts/edgetwincal_msn2026_v1/analysis/failure_diagnosis.json",
+      "sha256": "16d41d2fd9cbf66bd95ad22c0072421ca03e1b4aeb031e64cec86763104018a4"
+    },
+    {
+      "bytes": 3978,
+      "path": "artifacts/edgetwincal_msn2026_v1/analysis/REPORT_CN.md",
+      "sha256": "e5a9a95cf628573e3a317e8ba70d11ebc42bd18bdfd72cd63366c4d3aab0c25d"
+    },
+    {
+      "bytes": 2308,
+      "path": "artifacts/edgetwincal_msn2026_v1/analysis/figures/strict_main_mse.svg",
+      "sha256": "6340d1a347d688bd81746f3e24e9c481cf7ac6e061f0efd7841f3c850875ff9c"
+    },
+    {
+      "bytes": 4907,
+      "path": "artifacts/edgetwincal_msn2026_v1/analysis/figures/strict_ablation_gain.svg",
+      "sha256": "6ac48963cd97e29a226bed5ae23cfaafe7efb098b6e09fd51004ddad8df01a60"
+    },
+    {
+      "bytes": 9000,
+      "path": "artifacts/edgetwincal_msn2026_v1/analysis/dataset_variant_summary.csv",
+      "sha256": "729c3c041ce9df35ea4f7e2998e8d638d0f4d8c006ce0f2b244a2af31781255c"
+    },
+    {
+      "bytes": 21054,
+      "path": "artifacts/edgetwincal_msn2026_v1/analysis/seed_summary.csv",
+      "sha256": "2192a7b9ea38961bd6c05829b7e9d0e4756073eb57e6f616ed605c7585edb46a"
+    },
+    {
+      "bytes": 13215,
+      "path": "artifacts/edgetwincal_msn2026_v1/analysis/paired_comparisons.csv",
+      "sha256": "634c615f7fb29c0de411394844206e4636e3d025b8965c69020de8acd11b77ea"
+    },
+    {
+      "bytes": 3936,
+      "path": "artifacts/edgetwincal_msn2026_v1/analysis/gate_summary.csv",
+      "sha256": "0c650849375e88354ffef522a5cd63f311a7cbdff1f724bd1e6c05e65ab25f24"
+    },
+    {
+      "bytes": 57541,
+      "path": "artifacts/edgetwincal_msn2026_v1/analysis/EdgeTwinCal_lab_results.xlsx",
+      "sha256": "032a937af84a918fabb94dcab6b7b1af7a9948cfffee39f27a0adae4d9fff01b"
+    }
+  ],
+  "paper_conclusion_rewritten": false,
+  "schema_version": "edgetwincal.analysis-provenance.v1",
+  "test_reopened": false,
+  "test_tensor_cache_read": false,
+  "verdict": "ABANDON"
+}

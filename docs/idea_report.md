@@ -1,10 +1,98 @@
 <!--
 Modified: 2026-07-21
+Changes: Activated the confirmatory EdgeTwinCal lab handoff, separated the
+legacy pilot from the locked msn2026_v1 protocol, and froze mechanism semantics.
+-->
+
+## Current Active Route: EdgeTwinCal Confirmatory Lab Campaign
+
+> Status: protocol repair and pre-test implementation; no new test split opened.
+
+**Track and claim boundary.** The project targets IEEE MSN 2026
+`Edge Computing, IoT and Digital Twins`. The defensible contribution is a
+post-hoc, frozen-backbone calibration mechanism for irregular multi-sensor
+forecasting. A general edge-deployment claim is conditional on measurement on an
+actual edge CPU or Jetson; RTX 4090 measurements are workstation measurements.
+
+**Structural question.** APN is channel independent after shared temporal
+aggregation. EdgeTwinCal asks whether two residual information sources that the
+frozen APN decoder does not jointly exploit can be added without retraining the
+backbone:
+
+1. SLRH uses the target sensor''s frozen latent state to predict APN residual.
+2. CFG uses other sensors'' frozen APN forecasts to predict the remaining target
+   residual through a zero-diagonal cross-sensor ridge graph.
+
+The locked Full order is SLRH then CFG. For Full, CFG''s correction anchor is the
+SLRH-corrected target prediction, while its feature source remains the original
+frozen APN forecast tensor. The source tensor is not replaced by SLRH output.
+This distinction is `method_version=msn2026_v1`.
+
+**Legacy boundary.** The existing P12 results for checkpoints 2024--2026 are
+`legacy_v1` exploratory evidence only. They inherit released-code full-data
+normalization, were selected after five test-inspecting routes, use an incorrect
+nested bootstrap, and couple CFG anchor/source differently. Their hashes and
+metrics are retained only for G0 parity and are never overwritten or combined
+with confirmatory results.
+
+**Confirmatory protocols.**
+
+- Release parity: reproduce APN''s released behavior and report it separately.
+- Strict audit: group-disjoint split followed by train-only normalization.
+  P12 uses SHA256 ordering of
+  `edgetwincal-msn2026-p12-v1:<patient_id>` into 80/10/10; USHCN keeps an
+  official station-disjoint fold or uses the analogous locked station hash
+  repair. HumanActivity uses participant-held-out folds when participant IDs are
+  reliable. MIMIC-III remains `BLOCKED` without legal access.
+- Five paired checkpoints, seeds 2024--2028, are targeted. A missing dataset or
+  checkpoint is a recorded blocker, never an imputed result.
+- APN Table 2 supplies reported context only. APN Table 3 is not transcribed,
+  implemented, or reproduced.
+
+**Mechanism controls.** The strict P12 and USHCN registries include Bias-only,
+Self-affine, Decoder-only refit, Reverse CFG-to-SLRH, block-penalty Joint ridge,
+Full-Diagonal, Full-CrossShuffle, and SLRH-LatentShuffle. The locked ridge alpha
+grid is `{1,10,100,1000,10000,100000}`; intercepts are unpenalized; one global
+alpha per dataset/checkpoint/variant is selected on validation micro MSE. Joint
+uses the complete 6 by 6 block-penalty grid.
+
+**Inference.** Test rows are accumulated as group x checkpoint x variant
+`SSE/SAE/N` cells. The primary point estimate is pooled micro error.
+Confirmatory intervals use 50,000 crossed group x checkpoint paired bootstrap
+draws with seed 20260721 and shared multiplicities for every variant. Holm
+correction is applied within declared comparison families. Official protocols
+without reliable group IDs receive seed-level descriptive summaries rather than
+invented group inference.
+
+**Safety semantics.** `harmful` means an interval supports harm beyond the
+predeclared margin; an interval that merely fails to exclude harm is
+`safety-inconclusive`. Legacy `passed` fields are renamed
+`legacy_attempt5_threshold_pass` and do not satisfy G0--G4.
+
+**Pre-test gate.** FIX-01--FIX-06, synthetic/control tests, split and
+normalization manifests, cache provenance, paired registry, timing/device truth,
+legacy parity, and protocol hashes must all pass and be frozen before any new
+test split is opened. Test is opened once and never used to tune or repair the
+route.
+
+**Research questions.** RQ1 tests paired improvement over frozen APN under
+release and strict protocols. RQ2 tests whether the two information sources are
+mechanistically complementary rather than extra capacity or order alone. RQ3
+tests whether any gain generalizes across runnable sensor datasets. RQ4 measures
+adapter state, warm inference overhead, memory, and update cost on available
+hardware without mislabeling workstation results as edge results.
+
+---
+
+## Legacy Pilot Route: EdgeTwinCal (superseded by the protocol above)
+
+<!--
+Modified: 2026-07-21
 Changes: Updated the active EdgeTwinCal route with the formal ablation rerun,
 checkpoint provenance, and exploratory evidence boundary.
 -->
 
-## Current Active Route: EdgeTwinCal
+## Archived Pilot Description
 
 > Status: exploratory three-seed main experiment and mechanism ablation complete.
 

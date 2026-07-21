@@ -1,3 +1,259 @@
+# Active Implementation Guide ? EdgeTwinCal msn2026_v1 Lab Campaign
+> Updated: 2026-07-21 | Status: design frozen before coding
+> Authority: EdgeTwinCal_Lab_Experiment_Handoff_20260721
+
+## 1 Scope and invariants
+
+All writes are rooted at C:\Users\qintian\Desktop\msn2. The Downloads handoff
+is read-only. The sibling Desktop\msn, HOME, and CODEX_HOME are out of scope.
+APN remains pinned at f0d6eeb7a2ee2d7c76475bf725b7ea25f98af3f4. The
+project method version is msn2026_v1; legacy_v1 remains immutable parity evidence.
+
+The new implementation must not open a new test split until G0 and G1 are
+recorded PASS. Train and validation data, plus synthetic fixtures, are the only
+data allowed during implementation and tuning. Any test-derived pass threshold
+in the old runner is removed from the confirmatory path.
+
+## 2 Implementation strategy
+
+The APN backbone remains frozen. Project-owned modules provide configuration,
+protocol manifests, provenance-safe cached feature extraction, generic ridge
+solvers, EdgeTwinCal variants, unified run records, segmented timing, and crossed
+inference. Release parity and strict audit are separate campaigns and directories.
+The earlier EviPatch patch may remain applied locally only in APN mode after
+forward parity; it is not part of the EdgeTwinCal method.
+
+The most important semantic repair is a two-input CFG interface:
+
+- base_to_correct is the target forecast to which a CFG correction is added.
+- source_forecasts is the tensor used to construct graph features.
+- CFG-only passes frozen APN for both inputs.
+- Full passes SLRH output as base_to_correct and frozen APN as source_forecasts.
+- Reverse first fits CFG on frozen APN and then fits SLRH on the CFG output.
+- Full-Diagonal reuses the exact frozen SLRH state and changes only CFG self-edge
+  availability.
+
+## 3 Project-owned tree
+
+- code/configs/msn2026/default.json: single resolved experiment source.
+- code/src/edgetwincal/config.py: validation, canonicalization, config hash.
+- code/src/edgetwincal/schema.py: atomic run manifest and completeness checks.
+- code/src/edgetwincal/provenance.py: cache keys/manifests and stale rejection.
+- code/src/edgetwincal/protocol.py: group splits and train-only normalization.
+- code/src/edgetwincal/ridge.py: shared standardization and ridge objectives.
+- code/src/edgetwincal/latent.py: SLRH using the shared ridge implementation.
+- code/src/edgetwincal/graph.py: decoupled CFG anchor/source implementation.
+- code/src/edgetwincal/controls.py: V01 Bias, V02 Self-Affine, V10 Diagonal.
+- code/src/edgetwincal/joint.py: V08 block-penalty joint ridge.
+- code/src/edgetwincal/shuffle.py: V11/V12 deterministic permutations.
+- code/src/edgetwincal/decoder_refit.py: V03 decoder-only AdamW refit.
+- code/src/edgetwincal/timing.py: phase/device-aware measurement.
+- code/src/edgetwincal/statistics.py: cell table, crossed bootstrap, Holm.
+- code/src/edgetwincal/campaign.py: pre-test freeze and once-only orchestration.
+- code/tests/test_edgetwincal_*.py: one focused suite per FIX/control.
+- results/edgetwincal_legacy_v1: immutable pilot namespace.
+- results/edgetwincal_msn2026_v1: new private campaign state.
+- artifacts/edgetwincal_msn2026_v1: compact non-private outputs.
+- packages: final audited return archive.
+
+## 4 Function and contract table
+
+| Module | Primary contract | Required output |
+|---|---|---|
+| config.py | load_resolved_config(path, overrides) | immutable mapping plus canonical SHA256 |
+| schema.py | RunManifest start/complete/fail/validate | atomic JSON with file hashes and status |
+| provenance.py | CacheManifest build/validate/digest | exact field mismatch or corruption rejection |
+| protocol.py | hash_group_split, fit_train_normalizer | disjoint split and normalization manifests |
+| ridge.py | fit_ridge_grid, apply_ridge | unpenalized intercept and validation-selected alpha |
+| latent.py | fit/apply SLRH | corrected forecast, state, curve, timing |
+| graph.py | fit/apply CFG(anchor, source) | zero/optional diagonal graph correction |
+| controls.py | fit/apply Bias/Affine/Diagonal | matched train/validation-only controls |
+| joint.py | fit_joint_grid | complete 6 by 6 validation surface |
+| shuffle.py | deterministic_permutation | indices hash and shuffled feature source only |
+| decoder_refit.py | fit_decoder_only | trainable names, curves, hashes, timings |
+| timing.py | PhaseTimer, warm_inference | synchronized phase records with true device |
+| statistics.py | cells, crossed_bootstrap, holm | micro effects, 95% CI, corrected decisions |
+| campaign.py | freeze, validate, execute | registry hash and once-only test ledger |
+
+## 5 Tensor and objective logic
+
+Let B be batch size, H forecast horizon, C sensors, and D frozen latent width.
+
+- Forecast, target, and target mask have shape [B,H,C].
+- APN latent features have shape [B,C,D].
+- SLRH predicts one residual vector of H values for each target sensor from its
+  own D-vector; training rows are mask-filtered target positions.
+- CFG creates for each target sensor and horizon a feature vector from frozen APN
+  forecasts of source sensors. Zero diagonal excludes the target sensor; V10
+  explicitly includes it.
+- Shuffles permute rows, never target/mask values. CrossShuffle uses one source
+  permutation per source sensor and split, shared by every target and horizon.
+  LatentShuffle uses one permutation per target sensor and split, shared across
+  horizons.
+- All feature standardizers are fitted on training rows only, use a 1e-6 scale
+  floor, and are serialized with fit-row hashes.
+- Ridge minimizes summed squared error plus alpha times squared slopes. Intercepts
+  are never penalized. A single alpha is chosen per dataset, checkpoint, variant
+  using validation micro MSE.
+- Joint ridge standardizes latent and graph blocks separately and evaluates all
+  36 ordered alpha pairs.
+
+Empty-mask targets return finite zero corrections and explicit no-observation
+diagnostics. NaN or infinite features, targets, coefficients, or metrics fail the
+run before it can be marked complete.
+
+## 6 FIX-01: resolved configuration
+
+default.json contains schema/method versions, project/APN commits, datasets,
+protocols, seeds 2024--2028, hyperparameters, variant registry, ridge grids,
+bootstrap settings, timing settings, gates, and paths relative to the project
+root. CLI seed/dataset/variant overrides may only select members already present
+in the resolved config. Canonical JSON uses sorted keys and stable separators.
+Every run stores the complete resolved object and its SHA256. Import and --help
+must not require vendor/APN or data assets.
+
+## 7 FIX-02: provenance-safe cache
+
+A cache key includes project commit, APN commit, APN patch hash/mode, checkpoint
+SHA256, resolved-config hash, raw and processed dataset hashes, protocol/split
+manifest hash, sample/group ID hash, normalization manifest hash, loader and
+extractor source hashes, seed, shapes, dtypes, and mask hash. The digest is part
+of the filename. Loading validates every field and payload hash; stale, partial,
+or corrupt caches are rejected. Writes use a temporary file followed by an
+atomic replace and a same-directory lock. A legacy schema-2 cache can be read
+only by the isolated legacy parity command, never relabeled as msn2026_v1.
+
+## 8 FIX-03: leakage-controlled protocol
+
+Strict group membership is chosen before normalization. P12 group hashes use the
+locked patient salt and ascending SHA256 allocation with floor 80/10/10.
+Normalization sees only observed training values. Manifests record dataset and
+protocol IDs, counts, salted public group hashes, internal fit-ID hash, split
+hash, feature statistics, scale floor, code hash, and data asset hashes. Raw IDs
+never enter public artifacts. Tests prove group disjointness, train-only fit,
+test-extreme invariance, deterministic hashes, and no raw-ID leakage.
+
+USHCN first audits station overlap in the official fold; it keeps a disjoint fold
+or applies the locked station hash repair. HumanActivity never infers participant
+identity from reset sample IDs. MIMIC-III is blocked unless legal access is
+present and documented.
+
+## 9 FIX-04: confirmatory inference
+
+Evaluation emits one row per group, checkpoint, and variant with SSE, SAE, and N;
+duplicate windows aggregate by summation. Point estimates are pooled sums divided
+by pooled N. Each of 50,000 draws independently samples multiplicities over the
+global group set and checkpoint set, then applies the same crossed products to
+all variants. Seed 20260721 is fixed. The output includes absolute and relative
+effects, percentile 95% intervals, patient/group macro descriptions, improvement
+fractions, and Holm-adjusted comparison families. Datasets without reliable group
+IDs receive seed-level summaries, not crossed patient claims.
+
+A known-answer constant-effect fixture must return its exact point effect and a
+degenerate interval; unequal-N, duplicate-row, row-order, and paired-multiplicity
+tests protect the estimand.
+
+## 10 FIX-05: segmented timing
+
+The timing schema separates APN load, feature extraction, cache read/write, SLRH
+candidate solves, CFG candidate solves, validation scoring/selection,
+serialization, and warm batch-1 inference. Each record names CPU or CUDA and
+contains warmup/repetition settings. CUDA phases synchronize before start and
+after end. Closed-form solves on CPU are labeled CPU. Peak CUDA allocation and
+process RSS are separate. RTX 4090 results are workstation results. Edge gates
+remain blocked until a real edge CPU or Jetson record exists.
+
+## 11 FIX-06: unified run schema
+
+RunManifest transitions created -> running -> complete or failed. Complete runs
+must contain the resolved config/hash, assets, cache manifest, split and
+normalizer manifests, variant definition/hash, selected hyperparameters,
+segmented timing, SSE/SAE/N cells, metrics, required-file hashes, environment,
+argv, log path, and error-free status. Failures retain the error and completed
+phases. Aggregation accepts only complete manifests whose required files and
+hashes validate. It never silently drops a failed seed.
+
+## 12 Variant registry
+
+| ID | Definition | Special validation |
+|---|---|---|
+| APN | frozen forecast | no fitted state |
+| SLRH | target latent ridge | one alpha curve |
+| CFG | zero-diagonal other-sensor forecast ridge | anchor=source=APN |
+| Full | SLRH then CFG | CFG anchor=SLRH; source=APN |
+| V01 | residual Bias-only | train observed rows only |
+| V02 | per target/horizon Self-Affine | unpenalized intercept |
+| V03 | decoder-only refit | non-decoder weights byte-identical |
+| V07 | CFG then SLRH | stage order explicit |
+| V08 | joint latent+cross forecast ridge | full 36-cell grid |
+| V10 | Full-Diagonal | exact SLRH state reused |
+| V11 | Full-CrossShuffle | only CFG source rows shuffled |
+| V12 | SLRH-LatentShuffle | only latent rows shuffled |
+
+V03 initializes from the same checkpoint and enables gradients only for
+model.model.decoder parameters. It uses AdamW, up to 100 epochs, patience 10,
+learning rates 1e-4/3e-4/1e-3 and weight decay 0/1e-4, selected on validation.
+
+## 13 Campaign sequence
+
+1. M0 asset audit, existing five tests, legacy cache/output metric parity, and
+   immutable legacy hash manifest.
+2. Implement FIX-01 and FIX-06 skeletons.
+3. Implement FIX-02 and exhaustive stale-cache tests.
+4. Implement FIX-03 and split/normalization tests.
+5. Repair CFG semantics, factor generic ridge, and implement static controls.
+6. Implement decoder refit and frozen-parameter tests.
+7. Integrate FIX-05 timing and FIX-04 statistics.
+8. Run every pre-test unit/integration test and APN mode forward parity at
+   atol 1e-8, rtol 1e-7.
+9. Freeze resolved config, variant registry, splits, normalizers, code/patch
+   hashes, statistics settings, and a signed protocol ledger.
+10. Train or locate paired APN checkpoints using train/validation only; failures
+    stay in the matrix.
+11. Open each new test once, run the frozen registry without tuning, then close
+    the once-only ledger.
+12. Aggregate gates, render compact tables/figures, benchmark available hardware,
+    and build the audited return ZIP.
+
+GPU jobs run sequentially on the single RTX 4090. CPU-only unit work may run
+concurrently only when it cannot contend with or alter a GPU campaign.
+
+## 14 Coverage and gates
+
+G0 requires all tests, legacy metric parity, and APN forward parity. G1 requires
+no leakage, overlap, stale cache, pairing, missing run, or provenance failure.
+G2 evaluates order, joint, capacity, diagonal, and shuffle explanations. G3
+classifies strict datasets as strong/supportive/neutral/harmful or
+safety-inconclusive; broad claims require at least ceiling(0.75D) strong datasets
+and none harmful. G4 requires state at most 1 MiB, warm batch-1 p95 overhead at
+most 10%, memory overhead at most 10%, and update-128 at most 60 seconds on a
+real edge target. Unavailable data/checkpoints/hardware are explicit BLOCKED
+cells and narrow the claim.
+
+## 15 Pre-coding checklist
+
+- Workspace boundary: verified msn2 only.
+- Git branch: lab/msn2026-full-benchmark.
+- Python/PyTorch: 3.11.13 and 2.6.0+cu124.
+- GPU: one RTX 4090 available; no edge device detected.
+- APN commit: pinned and locally patched; APN-mode parity required.
+- Data: P12 assets present; HumanActivity, USHCN, and MIMIC-III absent.
+- Checkpoints: 2024--2026 present and finite; 2027/2028 absent.
+- Existing tests: five passed.
+- Legacy parity: cache/output arrays identical and metric error <= 5.55e-17.
+- Run strategy: project-root commands, sequential GPU, no new test before freeze.
+- Documentation: this guide, idea report, user requirements, append-only dev log,
+  and code README are the synchronized How to Run sources.
+
+The absent assets prevent the full four-dataset/five-checkpoint campaign today,
+but they do not block implementing and validating the complete protocol or
+running the P12 cells whose required assets exist.
+
+---
+
+# Archived Implementation Guide ? EviPatch Stage A
+
+
 # Implementation Guide — EviPatch Stage A
 > Generated: 2026-07-20 | Strategy: strong baseline patch | Status: CONFIRMED
 > Linked design: `docs/idea_report.md` Part 3
@@ -299,3 +555,62 @@ Before download, the runner verifies that every resolved storage path is inside 
 - ✅ Dataset: public PhysioNet automatic download selected; MIMIC excluded.
 - ✅ Run strategy: smoke → three-seed Stage A → automatic gate → conditional expansion.
 - ✅ Isolation: all mutable paths guarded under `C:\Users\qintian\Desktop\msn2`.
+
+---
+
+## Active sealed-return implementation (final)
+
+The EdgeTwinCal confirmatory campaign is complete and immutable. The active
+result/report surface is:
+
+- `aggregate_v2.py` and `statistics.py`: 180-manifest audit, pooled micro
+  metrics, group-by-checkpoint crossed paired bootstrap, raw percentile 95% CI,
+  and Holm-adjusted one-sided bootstrap p-values.
+- `lab_report.py`: rehash G0/G1 evidence, verify exactly one closed/sealed
+  opening per cell, build the non-overridable gate, replay only train/validation
+  fit caches for diagnosis, read test-side evidence only from sealed manifest
+  error cells, and render the Chinese report/SVG/provenance.
+- `build_edgetwincal_tables.mjs`: write the four traceable CSV tables and the
+  Results, Seed metrics, Paired CIs, Gate audit, and Provenance workbook sheets
+  through `@oai/artifact-tool`.
+- `package.py`: collect the closed delivery whitelist, scan private paths and
+  secrets (including expanded XLSX XML), reject forbidden/oversized sources,
+  create a deterministic ZIP, and verify CRC/member SHA256.
+
+The final gate is ABANDON: G2 mechanism FAIL; strict G3 FAIL with P12 strong and
+USHCN harmful; release broad-scope FAIL because group IDs are unreliable; G4
+BLOCKED because no real edge CPU/Jetson target exists. The P12 result may be
+reported only as dataset-specific. The current APN route stops after attempt
+five, and the already opened tests cannot be used to select a replacement.
+
+### Final output contract
+
+`artifacts/edgetwincal_msn2026_v1/analysis` contains the formal aggregate,
+manifest registry, blockers, terminal pre-test audit, gate decision, failure
+diagnosis, analysis provenance, Chinese report, two SVG figures, four CSV
+tables, and `EdgeTwinCal_lab_results.xlsx`. `packages` contains only the final
+ZIP and its external verification CSV. Datasets, environments, caches,
+checkpoints, NPZ/PT/PDF files, `vendor/APN`, manuscripts, secrets, private
+absolute paths, and files above 100 MB are forbidden.
+
+### Final How to Run
+
+```powershell
+$edgeTwinPython = (Resolve-Path '.\.conda\envs\evipatch\python.exe').Path
+$env:PYTHONPATH = (Resolve-Path '.\code\src').Path
+
+# Regenerate the sealed JSON/Markdown/SVG return without opening test data.
+& $edgeTwinPython .\code\scripts\render_edgetwincal_results.py
+
+# Validate the complete project-owned implementation.
+& $edgeTwinPython -m pytest .\code\tests -q -p no:cacheprovider
+
+# Create and self-verify the filtered deterministic archive.
+& $edgeTwinPython .\code\scripts\package_edgetwincal.py
+```
+
+For workbook regeneration, run `build_edgetwincal_tables.mjs` from an ignored
+project-local temporary directory whose `node_modules` is a junction to the
+Codex bundled dependency runtime, pass the repository root explicitly, render
+all five sheets to temporary PNGs, inspect the declared ranges, and require a
+zero-result formula-error scan before exporting XLSX.

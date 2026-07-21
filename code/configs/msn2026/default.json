@@ -1,0 +1,305 @@
+{
+  "schema_version": 1,
+  "method": {
+    "id": "edgetwincal",
+    "version": "msn2026_v1",
+    "title": "EdgeTwinCal: Dual-Space Calibration for Frozen Irregular-Sensor Digital Twins",
+    "track": "Edge Computing, IoT and Digital Twins"
+  },
+  "project": {
+    "repository": "git@github.com:hansu650/msnmsn2.git",
+    "source_anchor_commit": "37199882959dad3910b336a69da4d8b5e7087d55"
+  },
+  "apn": {
+    "repository": "https://github.com/decisionintelligence/APN.git",
+    "commit": "f0d6eeb7a2ee2d7c76475bf725b7ea25f98af3f4",
+    "patch": "patches/apn_evipatch.patch",
+    "patch_mode": "apn_parity_only"
+  },
+  "campaign": {
+    "id": "msn2026_full_benchmark",
+    "seeds": [2024, 2025, 2026, 2027, 2028],
+    "primary_metric": "masked_micro_mse",
+    "secondary_metric": "masked_micro_mae",
+    "test_policy": "once_only_after_registry_freeze",
+    "failure_policy": "retain_and_exclude_from_aggregation_with_explicit_error"
+  },
+  "paths": {
+    "apn_root": "vendor/APN",
+    "dataset_root": "data/tsdm",
+    "checkpoint_root": "results/checkpoints",
+    "protocol_root": "results/edgetwincal_msn2026_v1/protocol",
+    "cache_root": "results/edgetwincal_msn2026_v1/cache",
+    "run_root": "results/edgetwincal_msn2026_v1/runs",
+    "log_root": "logs/edgetwincal_msn2026_v1",
+    "artifact_root": "artifacts/edgetwincal_msn2026_v1",
+    "package_root": "packages"
+  },
+  "datasets": {
+    "P12": {
+      "availability": "required",
+      "storage": "data/tsdm",
+      "group_unit": "patient_id",
+      "release_protocol": "release_parity",
+      "strict_protocol": "strict_p12",
+      "task": {
+        "history": 36,
+        "horizon_kind": "fixed_steps",
+        "prediction_steps": 3,
+        "channels": 36
+      },
+      "apn_hyperparameters": {
+        "d_model": 24,
+        "learning_rate": 0.03,
+        "batch_size": 32,
+        "dropout": 0.1,
+        "npatch": 20,
+        "te_dim": 8
+      }
+    },
+    "HumanActivity": {
+      "availability": "required",
+      "storage": "data/tsdm/HumanActivity",
+      "group_unit": "record_for_release_participant_for_strict",
+      "release_protocol": "release_parity",
+      "strict_protocol": "strict_human_activity",
+      "task": {
+        "history": 3000,
+        "horizon_kind": "time_window",
+        "forecast_window": 300,
+        "padded_prediction_steps_source": "frozen_protocol_manifest_or_extraction_contract",
+        "channels": 12
+      },
+      "apn_hyperparameters": {
+        "d_model": 56,
+        "learning_rate": 0.01,
+        "batch_size": 16,
+        "dropout": 0.0,
+        "npatch": 300,
+        "te_dim": 8
+      }
+    },
+    "USHCN": {
+      "availability": "required",
+      "storage": "data/tsdm/datasets/USHCN_DeBrouwer2019",
+      "group_unit": "station_id",
+      "release_protocol": "release_parity",
+      "strict_protocol": "strict_ushcn",
+      "task": {
+        "history": 150,
+        "horizon_kind": "fixed_steps",
+        "prediction_steps": 3,
+        "channels": 5
+      },
+      "apn_hyperparameters": {
+        "d_model": 6,
+        "learning_rate": 0.01,
+        "batch_size": 32,
+        "dropout": 0.1,
+        "npatch": 100,
+        "te_dim": 32
+      }
+    },
+    "MIMIC_III": {
+      "availability": "required",
+      "storage": "data/tsdm/datasets/MIMIC_III_DeBrouwer2019",
+      "group_unit": "patient_id",
+      "release_protocol": "release_parity",
+      "strict_protocol": "strict_mimic_iii",
+      "task": {
+        "history": 72,
+        "horizon_kind": "fixed_steps",
+        "prediction_steps": 3,
+        "channels": 96
+      },
+      "apn_hyperparameters": {
+        "d_model": 16,
+        "learning_rate": 0.02,
+        "batch_size": 32,
+        "dropout": 0.0,
+        "npatch": 50,
+        "te_dim": 16
+      }
+    }
+  },
+  "protocols": {
+    "release_parity": {
+      "kind": "released_code",
+      "normalization": "released_code_behavior",
+      "test_inference": "paired_checkpoint_only",
+      "claims": "descriptive_release_parity"
+    },
+    "strict_p12": {
+      "kind": "leakage_controlled",
+      "split": "sha256_group_ascending_floor_80_10_10",
+      "group_salt": "edgetwincal-msn2026-p12-v1:",
+      "normalization": "observed_train_only",
+      "controls": "all_must"
+    },
+    "strict_ushcn": {
+      "kind": "leakage_controlled",
+      "split": "audit_official_station_fold_then_hash_repair_if_needed",
+      "group_salt": "edgetwincal-msn2026-ushcn-v1:",
+      "normalization": "observed_train_only",
+      "controls": "all_must"
+    },
+    "strict_human_activity": {
+      "kind": "participant_held_out_all_folds",
+      "normalization": "observed_train_only",
+      "priority": "should"
+    },
+    "strict_mimic_iii": {
+      "kind": "leakage_controlled",
+      "normalization": "observed_train_only",
+      "priority": "should_if_authorized"
+    }
+  },
+  "training": {
+    "features": "M",
+    "loss": "MSE",
+    "optimizer": "Adam",
+    "epochs": 200,
+    "patience": 10,
+    "validation_interval": 1,
+    "checkpoint_selection": "lowest_validation_masked_micro_mse"
+  },
+  "ridge": {
+    "objective": "sum_squared_error_plus_alpha_l2_slopes",
+    "intercept_penalized": false,
+    "standardization_fit": "observed_training_rows_only",
+    "scale_floor": 0.000001,
+    "alpha_grid": [1.0, 10.0, 100.0, 1000.0, 10000.0, 100000.0],
+    "selection": "one_global_alpha_per_dataset_checkpoint_variant_by_validation_micro_mse",
+    "joint_alpha_grid": [1.0, 10.0, 100.0, 1000.0, 10000.0, 100000.0]
+  },
+  "decoder_refit": {
+    "optimizer": "AdamW",
+    "max_epochs": 100,
+    "patience": 10,
+    "learning_rates": [0.0001, 0.0003, 0.001],
+    "weight_decays": [0.0, 0.0001],
+    "trainable_prefix": "model.decoder"
+  },
+  "variants": {
+    "APN": {
+      "definition": "Frozen released-code APN forecast",
+      "stage_order": [],
+      "scope": "all_release_and_strict"
+    },
+    "SLRH": {
+      "definition": "Sensor Latent Residual Head fitted to frozen target-sensor latent features",
+      "stage_order": ["SLRH"],
+      "scope": "all_release_and_strict"
+    },
+    "CFG": {
+      "definition": "Zero-diagonal Cross-Forecast Graph with APN as anchor and source",
+      "stage_order": ["CFG"],
+      "scope": "all_release_and_strict"
+    },
+    "Full": {
+      "definition": "SLRH correction followed by CFG anchored on SLRH and sourced from frozen APN forecasts",
+      "stage_order": ["SLRH", "CFG"],
+      "scope": "all_release_and_strict"
+    },
+    "V01": {
+      "definition": "Bias-only residual calibration",
+      "stage_order": ["Bias"],
+      "scope": "strict_p12_and_ushcn"
+    },
+    "V02": {
+      "definition": "Per-target and per-horizon self-affine residual calibration",
+      "stage_order": ["SelfAffine"],
+      "scope": "strict_p12_and_ushcn"
+    },
+    "V03": {
+      "definition": "Decoder-only AdamW refit from the paired frozen APN checkpoint",
+      "stage_order": ["DecoderRefit"],
+      "scope": "strict_p12_and_ushcn"
+    },
+    "V07": {
+      "definition": "Reverse order CFG then SLRH",
+      "stage_order": ["CFG", "SLRH"],
+      "scope": "strict_p12_and_ushcn"
+    },
+    "V08": {
+      "definition": "Matched-feature joint latent and cross-forecast block-penalty ridge",
+      "stage_order": ["JointRidge"],
+      "scope": "strict_p12_and_ushcn"
+    },
+    "V10": {
+      "definition": "Full-Diagonal reusing the exact Full SLRH state and enabling CFG self edges",
+      "stage_order": ["SLRH", "CFGDiagonal"],
+      "scope": "strict_p12_and_ushcn"
+    },
+    "V11": {
+      "definition": "Full-CrossShuffle with only other-sensor CFG source rows permuted",
+      "stage_order": ["SLRH", "CFGCrossShuffle"],
+      "scope": "strict_p12_and_ushcn"
+    },
+    "V12": {
+      "definition": "SLRH-LatentShuffle with only target-sensor latent rows permuted",
+      "stage_order": ["SLRHLatentShuffle"],
+      "scope": "strict_p12_and_ushcn"
+    }
+  },
+  "bootstrap": {
+    "method": "crossed_group_checkpoint",
+    "draws": 50000,
+    "analysis_seed": 20260721,
+    "confidence_level": 0.95,
+    "paired_multiplicities": true,
+    "multiple_testing": "Holm"
+  },
+  "timing": {
+    "warmup_repetitions": 20,
+    "measured_repetitions": 100,
+    "batch_size": 1,
+    "cuda_synchronize": true,
+    "segments": [
+      "apn_load",
+      "feature_extraction",
+      "cache_read",
+      "cache_write",
+      "slrh_solve",
+      "cfg_solve",
+      "validation_selection",
+      "serialization",
+      "warm_inference"
+    ]
+  },
+  "gates": {
+    "G0": {
+      "tests_required": true,
+      "legacy_parity_atol": 0.00000001,
+      "legacy_parity_rtol": 0.0000001
+    },
+    "G1": {
+      "reject_stale_cache": true,
+      "group_disjoint": true,
+      "train_only_normalization": true,
+      "no_missing_or_failed_run": true
+    },
+    "G2": {
+      "controls_required": ["V01", "V02", "V03", "V07", "V08", "V10", "V11", "V12"],
+      "joint_noninferiority_relative_mse_margin": 0.001
+    },
+    "G3": {
+      "minimum_relative_mse_improvement": 0.005,
+      "minimum_improved_paired_seeds": 4,
+      "strong_fraction": 0.75,
+      "allow_harmful_dataset": false
+    },
+    "G4": {
+      "maximum_state_bytes": 1048576,
+      "maximum_warm_p95_time_overhead_fraction": 0.10,
+      "maximum_memory_overhead_fraction": 0.10,
+      "maximum_update_128_seconds": 60.0,
+      "requires_real_edge_target": true
+    }
+  },
+  "selection": {
+    "datasets": ["P12", "HumanActivity", "USHCN", "MIMIC_III"],
+    "seeds": [2024, 2025, 2026, 2027, 2028],
+    "variants": ["APN", "SLRH", "CFG", "Full", "V01", "V02", "V03", "V07", "V08", "V10", "V11", "V12"]
+  }
+}

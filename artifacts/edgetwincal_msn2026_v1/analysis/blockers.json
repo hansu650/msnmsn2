@@ -1,0 +1,24 @@
+{
+  "blockers": [
+    {
+      "scope": "dataset",
+      "dataset": "MIMIC_III",
+      "status": "BLOCKED",
+      "reason_code": "MIMIC_AUTHOR_MAPPING_UNAVAILABLE",
+      "reason": "The released GRU-ODE-Bayes preprocessing requires the author UNIQUE_ID_dict.csv mapping, which is not present in the authorized local data or public APN assets; no substitute mapping was fabricated."
+    },
+    {
+      "scope": "strict_human_activity",
+      "dataset": "HumanActivity",
+      "status": "BLOCKED",
+      "reason_code": "PARTICIPANT_IDS_UNRELIABLE",
+      "reason": "The released HumanActivity asset does not expose reliable participant identifiers, so release-parity results are descriptive and no participant-held-out confirmatory cell was claimed."
+    },
+    {
+      "scope": "edge",
+      "status": "BLOCKED",
+      "reason_code": "REAL_EDGE_TARGET_UNAVAILABLE",
+      "reason": "No physical edge target was available in this workspace; RTX 4090 timing is retained only as workstation diagnostics and is not used to pass G4."
+    }
+  ]
+}

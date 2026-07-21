@@ -1,0 +1,78 @@
+{
+  "claim_actions": {
+    "P12_strict_result": "REPORT_DATASET_SPECIFIC_POSITIVE",
+    "USHCN_strict_result": "REPORT_HARM",
+    "broad_dataset_claim": "REJECT",
+    "current_APN_route": "STOP_AFTER_FIFTH_STRUCTURAL_ATTEMPT",
+    "future_baseline": "SWITCH_BASELINE_AND_USE_A_NEW_INDEPENDENT_TARGET",
+    "paper_conclusion_rewrite": "NOT_AUTHORIZED_BY_CURRENT_HANDOFF",
+    "real_edge_claim": "BLOCKED_AND_NARROW",
+    "same_test_retuning": "PROHIBITED"
+  },
+  "evidence": {
+    "aggregate": {
+      "bytes": 88314,
+      "path": "artifacts/edgetwincal_msn2026_v1/analysis/confirmatory_aggregate.json",
+      "sha256": "ee76eca32f48f0aa2ff34739f732ea67415f83bd973bf8727c145d495a0b0c6f"
+    },
+    "blockers": {
+      "bytes": 1039,
+      "path": "artifacts/edgetwincal_msn2026_v1/analysis/blockers.json",
+      "sha256": "1d62652be14eae0bb431ddab2ab9269d4eee818338fe6ddb78ff237437126d36"
+    },
+    "manifest_registry": {
+      "bytes": 17003,
+      "path": "artifacts/edgetwincal_msn2026_v1/analysis/manifest_registry.json",
+      "sha256": "aef9b9c5b65c9b101c5828a49ab590228a4f229688b72ec151d2bfc34d64ca69"
+    }
+  },
+  "gate_policy": "all declared gates must pass; blocked is not pass",
+  "gates": {
+    "G0": {
+      "scope": "implementation_parity",
+      "status": "PASS"
+    },
+    "G1": {
+      "scope": "protocol_and_provenance",
+      "status": "PASS"
+    },
+    "G2": {
+      "status": "FAIL"
+    },
+    "G3_release_scope": {
+      "classifications": {
+        "HumanActivity": "safety-inconclusive",
+        "P12": "supportive",
+        "USHCN": "safety-inconclusive"
+      },
+      "inference": "seed_descriptive_only",
+      "reason": "Release group IDs are not reliable; no confirmatory group-level interval exists.",
+      "required_strong_count": 3,
+      "runnable_dataset_count": 3,
+      "status": "FAIL",
+      "strong_count": 0
+    },
+    "G3_strict": {
+      "confirmatory_dataset_count": 2,
+      "harmful_count": 1,
+      "required_strong_count": 2,
+      "safety_inconclusive_count": 0,
+      "status": "FAIL",
+      "strong_count": 1
+    },
+    "G4": {
+      "reason_codes": [
+        "REAL_EDGE_TARGET_UNAVAILABLE"
+      ],
+      "status": "BLOCKED"
+    }
+  },
+  "reasons": [
+    "G2_MECHANISM_FAIL",
+    "G3_STRICT_GENERALIZATION_FAIL",
+    "G3_RELEASE_BROAD_CLAIM_FAIL",
+    "G4_REAL_EDGE_BLOCKED"
+  ],
+  "schema_version": "edgetwincal.gate-decision.v1",
+  "verdict": "ABANDON"
+}

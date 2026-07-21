@@ -82,10 +82,12 @@ def test_two_modules_recover_complementary_residuals() -> None:
         val_target,
         val_mask,
         alphas=[0.1, 1.0, 10.0],
+        train_source_forecasts=train_base,
+        val_source_forecasts=val_base,
     )
     baseline = (val_base - val_target).square().mean()
     latent_error = (latent_val - val_target).square().mean()
-    full_error = (graph.apply(latent_val) - val_target).square().mean()
+    full_error = (graph.apply(latent_val, val_base) - val_target).square().mean()
     assert latent_error < baseline
     assert full_error < latent_error * 0.1
     diagonal = torch.diagonal(graph.weights, dim1=1, dim2=2)

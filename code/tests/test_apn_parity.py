@@ -83,8 +83,8 @@ def test_patched_apn_full_forward_matches_upstream_after_state_migration() -> No
     torch.testing.assert_close(
         patched_output["pred"],
         upstream_output["pred"],
-        atol=1e-6,
-        rtol=1e-5,
+        atol=1e-8,
+        rtol=1e-7,
     )
     assert torch.equal(patched_output["true"], upstream_output["true"])
     assert torch.equal(patched_output["mask"], upstream_output["mask"])

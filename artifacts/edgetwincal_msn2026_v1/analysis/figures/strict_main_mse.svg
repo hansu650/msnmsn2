@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="980" height="560" viewBox="0 0 980 560">
+<rect width="100%" height="100%" fill="#ffffff"/>
+<text x="490.0" y="35" text-anchor="middle" font-family="Arial" font-size="22" font-weight="700">Strict protocols: APN vs Full</text>
+<line x1="92" y1="450.00" x2="940" y2="450.00" stroke="#E8EBF0"/>
+<text x="82" y="455.00" text-anchor="end" font-family="Arial" font-size="12" fill="#41464F">-0.036</text>
+<line x1="92" y1="374.00" x2="940" y2="374.00" stroke="#E8EBF0"/>
+<text x="82" y="379.00" text-anchor="end" font-family="Arial" font-size="12" fill="#41464F">0.068</text>
+<line x1="92" y1="298.00" x2="940" y2="298.00" stroke="#E8EBF0"/>
+<text x="82" y="303.00" text-anchor="end" font-family="Arial" font-size="12" fill="#41464F">0.171</text>
+<line x1="92" y1="222.00" x2="940" y2="222.00" stroke="#E8EBF0"/>
+<text x="82" y="227.00" text-anchor="end" font-family="Arial" font-size="12" fill="#41464F">0.274</text>
+<line x1="92" y1="146.00" x2="940" y2="146.00" stroke="#E8EBF0"/>
+<text x="82" y="151.00" text-anchor="end" font-family="Arial" font-size="12" fill="#41464F">0.378</text>
+<line x1="92" y1="70.00" x2="940" y2="70.00" stroke="#E8EBF0"/>
+<text x="82" y="75.00" text-anchor="end" font-family="Arial" font-size="12" fill="#41464F">0.481</text>
+<line x1="92" y1="423.79" x2="940" y2="423.79" stroke="#333" stroke-width="1.3"/>
+<rect x="265.00" y="208.17" width="36.00" height="215.63" fill="#2667FF"/>
+<rect x="307.00" y="209.94" width="36.00" height="213.85" fill="#E45756"/>
+<text x="304.00" y="478" text-anchor="middle" font-family="Arial" font-size="13" font-weight="600">P12</text>
+<rect x="689.00" y="290.35" width="36.00" height="133.45" fill="#2667FF"/>
+<rect x="731.00" y="96.21" width="36.00" height="327.59" fill="#E45756"/>
+<text x="728.00" y="478" text-anchor="middle" font-family="Arial" font-size="13" font-weight="600">USHCN</text>
+<rect x="92.00" y="524" width="12" height="12" fill="#2667FF"/>
+<text x="108.00" y="535" font-family="Arial" font-size="10">APN</text>
+<rect x="516.00" y="524" width="12" height="12" fill="#E45756"/>
+<text x="532.00" y="535" font-family="Arial" font-size="10">Full</text>
+<text transform="translate(22 260.0) rotate(-90)" text-anchor="middle" font-family="Arial" font-size="13">Masked micro MSE</text>
+</svg>

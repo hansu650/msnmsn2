@@ -1,0 +1,162 @@
+{
+  "G0": {
+    "status": "PASS"
+  },
+  "G1": {
+    "status": "PASS"
+  },
+  "all_test_ledgers_sealed": true,
+  "all_tokens_nonpersisted": true,
+  "cell_count": 5,
+  "cells": [
+    {
+      "G0": "PASS",
+      "G1": "PASS",
+      "check_reference_count": 7,
+      "complete_run_manifests": 20,
+      "dataset": "HumanActivity",
+      "evidence": {
+        "bytes": 2270,
+        "path": "artifacts/edgetwincal_msn2026_v1/pretest/HumanActivity/release_parity/pretest_evidence.json",
+        "sha256": "5e704f456319bb245c1c983dc8e159ee1c4ea18f54ead5d8198726795cf13dc7"
+      },
+      "expected_run_manifests": 20,
+      "ledger": {
+        "bytes": 14284,
+        "path": "results/edgetwincal_msn2026_v1/protocol/HumanActivity/release_parity/protocol_ledger.json",
+        "sha256": "7b49190861b146f7698aa8efce6e6f461d401b2e7361b104080825f01de16590"
+      },
+      "ledger_status": "sealed",
+      "once_result": {
+        "bytes": 3127,
+        "path": "results/edgetwincal_msn2026_v1/protocol/HumanActivity/release_parity/once_campaign_result.json",
+        "sha256": "f5b92ced17294a5255309aea14a140a47dd2923e05b8ba3c617b42b88f06a249"
+      },
+      "protocol": "release_parity",
+      "run_manifest_digest": "aedee60e7f426124877aa60eece1aa79c901be9ef81d5ad0ba3c351add1d38f0",
+      "test_closed": true,
+      "test_opening_count": 1,
+      "token_persisted": false
+    },
+    {
+      "G0": "PASS",
+      "G1": "PASS",
+      "check_reference_count": 7,
+      "complete_run_manifests": 20,
+      "dataset": "P12",
+      "evidence": {
+        "bytes": 2190,
+        "path": "artifacts/edgetwincal_msn2026_v1/pretest/P12/release_parity/pretest_evidence.json",
+        "sha256": "3b50ae80f4244bd72602eb58e6319c064308945d12b1c1b594e87f38fea80db8"
+      },
+      "expected_run_manifests": 20,
+      "ledger": {
+        "bytes": 14224,
+        "path": "results/edgetwincal_msn2026_v1/protocol/P12/release_parity/protocol_ledger.json",
+        "sha256": "557b78050b8605027b45b095906fc9c9d5560d99b5174916ca5af334a736abde"
+      },
+      "ledger_status": "sealed",
+      "once_result": {
+        "bytes": 2897,
+        "path": "results/edgetwincal_msn2026_v1/protocol/P12/release_parity/once_campaign_result.json",
+        "sha256": "1162388ae87e8849c362116616642261c69d5089822530d41ae73372b32a66ea"
+      },
+      "protocol": "release_parity",
+      "run_manifest_digest": "a223de663c794c2c1c25d05eedc92876baf42a79d01c1e4d7c838026ff42ccd2",
+      "test_closed": true,
+      "test_opening_count": 1,
+      "token_persisted": false
+    },
+    {
+      "G0": "PASS",
+      "G1": "PASS",
+      "check_reference_count": 7,
+      "complete_run_manifests": 60,
+      "dataset": "P12",
+      "evidence": {
+        "bytes": 2158,
+        "path": "artifacts/edgetwincal_msn2026_v1/pretest/P12/strict_p12/pretest_evidence.json",
+        "sha256": "9abfb64ade8237aabe1952495a0ca4096ad92b20fa3ebef0b96b4a9026dbfb94"
+      },
+      "expected_run_manifests": 60,
+      "ledger": {
+        "bytes": 14200,
+        "path": "results/edgetwincal_msn2026_v1/protocol/P12/strict_p12/protocol_ledger.json",
+        "sha256": "2049fdee6ba0094bed8be9b997fff3d8c1a973a791932b95a653efce2da1530b"
+      },
+      "ledger_status": "sealed",
+      "once_result": {
+        "bytes": 6485,
+        "path": "results/edgetwincal_msn2026_v1/protocol/P12/strict_p12/once_campaign_result.json",
+        "sha256": "6a985d36993e2c26e2a919831c9172a7fdbeb72556f406db755c5c9c941bd626"
+      },
+      "protocol": "strict_p12",
+      "run_manifest_digest": "ec8d53ae6d4ca8f84eb55c6205ad35d7f8db0d020daaada1cd67b9e1f53a8eda",
+      "test_closed": true,
+      "test_opening_count": 1,
+      "token_persisted": false
+    },
+    {
+      "G0": "PASS",
+      "G1": "PASS",
+      "check_reference_count": 7,
+      "complete_run_manifests": 20,
+      "dataset": "USHCN",
+      "evidence": {
+        "bytes": 2206,
+        "path": "artifacts/edgetwincal_msn2026_v1/pretest/USHCN/release_parity/pretest_evidence.json",
+        "sha256": "025df687e51dfa52260cd735d7b96cf849f2db646e486ff19af16055654a4866"
+      },
+      "expected_run_manifests": 20,
+      "ledger": {
+        "bytes": 14236,
+        "path": "results/edgetwincal_msn2026_v1/protocol/USHCN/release_parity/protocol_ledger.json",
+        "sha256": "2fee485a6ac2256eb5b48ad04d03f9c94c8d68dda11a385c9e1a6d56d2f72557"
+      },
+      "ledger_status": "sealed",
+      "once_result": {
+        "bytes": 2943,
+        "path": "results/edgetwincal_msn2026_v1/protocol/USHCN/release_parity/once_campaign_result.json",
+        "sha256": "9fc3f1df72f57338dac8f26b5949569153b2b6cab8be6c3adc66d0475a72914e"
+      },
+      "protocol": "release_parity",
+      "run_manifest_digest": "a077f101d30ff81b657543d0f4404ca9d46ec9e9e4f7779191e6fee61b6a9487",
+      "test_closed": true,
+      "test_opening_count": 1,
+      "token_persisted": false
+    },
+    {
+      "G0": "PASS",
+      "G1": "PASS",
+      "check_reference_count": 7,
+      "complete_run_manifests": 60,
+      "dataset": "USHCN",
+      "evidence": {
+        "bytes": 2190,
+        "path": "artifacts/edgetwincal_msn2026_v1/pretest/USHCN/strict_ushcn/pretest_evidence.json",
+        "sha256": "42a2cd3822c56a2d20506989b1b14a0408fdbd18788fcd70c52abefe2d58960e"
+      },
+      "expected_run_manifests": 60,
+      "ledger": {
+        "bytes": 14224,
+        "path": "results/edgetwincal_msn2026_v1/protocol/USHCN/strict_ushcn/protocol_ledger.json",
+        "sha256": "4266038c56753c9a74071142f23a71b5004801b720112db6337bdaf712527be8"
+      },
+      "ledger_status": "sealed",
+      "once_result": {
+        "bytes": 6737,
+        "path": "results/edgetwincal_msn2026_v1/protocol/USHCN/strict_ushcn/once_campaign_result.json",
+        "sha256": "ec26287b5a0dbdb161ca38f477db0a36f4b62dd71799c2bbc615b8a97b86a7d9"
+      },
+      "protocol": "strict_ushcn",
+      "run_manifest_digest": "3ca4f769cc7ade83a43c5fc6ee9ed5541297dc3717f216cd9a5bfbd12e080f02",
+      "test_closed": true,
+      "test_opening_count": 1,
+      "token_persisted": false
+    }
+  ],
+  "complete_manifest_count": 180,
+  "expected_manifest_count": 180,
+  "referenced_check_count": 35,
+  "schema_version": "edgetwincal.pretest-terminal-summary.v1"
+}

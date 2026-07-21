@@ -9,8 +9,8 @@ SOURCE = ROOT / "code" / "src"
 if str(SOURCE) not in sys.path:
     sys.path.insert(0, str(SOURCE))
 
-from edgetwincal.aggregate import run_aggregation
+from edgetwincal.aggregate import main
 
 
 if __name__ == "__main__":
-    run_aggregation()
+    raise SystemExit(main())
