@@ -1,5 +1,48 @@
 # User Requirements
 
+## EdgeTwinCal-Safe Final Confirmatory Override (2026-07-21, latest)
+
+This section supersedes the earlier instruction to stop after the fifth APN
+route only for one final, independently evaluated safety route. It does not
+reopen, retune, or reinterpret any sealed `msn2026_v1` test result.
+
+- Keep the APN baseline and pinned upstream commit unchanged. Do not switch
+  backbones and do not modify APN''s query, decoder, loss, or training objective.
+- Preserve APN, the original sequential EdgeTwinCal, and the existing Joint
+  Ridge as immutable comparison implementations. EdgeTwinCal-Safe adds only
+  two method modules: group-balanced robust residual fitting, and a bounded
+  validation-only deployment safety envelope with exact APN fallback.
+- Old P12 and USHCN results are diagnostic evidence only. Their opened tests,
+  caches, and outcomes must never participate in hyperparameter selection,
+  candidate ranking, gate thresholds, or implementation iteration.
+- Use two genuinely new sensor-network targets with unopened chronological
+  holdouts: UCI Beijing Multi-Site Air Quality and the official Intel Berkeley
+  Lab wireless-sensor data. Freeze source hashes, preprocessing, split times,
+  normalization, windowing, model settings, variant registry, statistics, and
+  safety thresholds before either holdout is constructed or evaluated.
+- Run paired APN checkpoints for seeds 2024--2028. Compare APN, Joint Ridge,
+  original EdgeTwinCal, and EdgeTwinCal-Safe fairly on identical checkpoints,
+  windows, masks, and pseudonymous group IDs. Retain every dataset and seed,
+  including failures and Safe fallbacks.
+- Report masked micro MSE/MAE, group summaries, every seed, crossed paired
+  group-by-checkpoint bootstrap intervals, effect sizes, and ablations for
+  robust fitting, group balancing, amplitude bounds, and the deployment gate.
+- Final success requires at least two new targets to be positive, no target to
+  regress by more than 1% in MSE or MAE, and Safe to meet the predeclared 0.1%
+  MSE non-inferiority margin versus Joint Ridge. Any failure yields `ABANDON`;
+  no post-test threshold change, sixth retry, or extra module is allowed.
+- Measure real CPU/Jetson latency and memory only after the efficacy gate passes.
+  Missing Jetson hardware is `BLOCKED`; workstation results cannot be labeled
+  Jetson or edge-device evidence.
+- Work on the isolated `lab/edgetwincal-safe` branch and under a new
+  `edgetwincal_safe_v1` namespace. Preserve the sealed `msn2026_v1` package,
+  all old results, and unrelated user changes. All mutable paths remain inside
+  `C:\Users\qintian\Desktop\msn2`; never set `HOME` or `CODEX_HOME`.
+- This request authorizes the complete ResearchPilot C/D/E/F workflow without
+  repeated confirmation: freeze the design, implement, test, download the two
+  public datasets, train sequentially, open each new holdout once, aggregate,
+  apply the gate, document the result, and commit/push the isolated branch.
+
 ## Current Lab Handoff Override (2026-07-21, latest)
 
 The user-provided directory

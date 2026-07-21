@@ -928,3 +928,195 @@ The table builder additionally requires the Codex bundled Node runtime with a
 local `node_modules` junction containing `@oai/artifact-tool`. It is executed
 from an ignored project-local QA directory and writes the final CSV/XLSX files
 directly under `artifacts/edgetwincal_msn2026_v1/analysis`.
+
+### 2026-07-21 23:00 CST ? EdgeTwinCal-Safe final confirmatory override accepted
+
+- **ResearchPilot phases**: Re-opened Phase C experiment design and Phase D implementation design under the user''s explicit final override; Phase E/F will implement and diagnose the frozen route. No manuscript phase is active.
+- **Scope**: Keep the existing APN backbone and compare paired `APN`, `Joint`, original `EdgeTwinCal`, and `EdgeTwinCal-Safe`. Safe adds group-balanced Huber residual fitting, a bounded/shrunk correction, and a validation-only dataset gate with exact APN fallback.
+- **New untouched targets**: Predeclared Beijing multi-site PM2.5 and Intel Lab mote-temperature forecasting with five APN seeds each. Existing P12/USHCN/MIMIC outcomes remain diagnostic only and cannot tune the new route.
+- **Isolation**: Created the independent `edgetwincal_safe_v1` namespace on branch `lab/edgetwincal-safe`; the sealed `msn2026_v1` code, ledgers, results, and packages remain immutable.
+- **How to Run**: No Safe command exists yet. Commands will be added here and to `code/README.md` immediately after the frozen design is implemented and smoke-tested.
+
+### 2026-07-21 23:05 CST ? Safe idea and untouched-target protocol frozen
+
+- **Changed**: `docs/idea_report.md` now defines GRJF and BVSE as the two Safe modules, the four paired main methods, four mechanism ablations, all fixed optimization/envelope grids, the independent validation safety gate, and exact APN fallback.
+- **Data protocol**: Froze Beijing 12-station PM2.5 and Intel 54-mote temperature timelines, windows, group identities, five paired seeds, train-only normalization, and once-only sealed tests before downloading or inspecting candidate values.
+- **Inference and kill gate**: Froze crossed group-by-checkpoint statistics, two-target positivity, the 1% harm ceiling, 0.1% Joint non-inferiority margin, conditional device timing, and unconditional `ABANDON` on efficacy failure.
+- **How to Run**: Still unchanged; implementation commands do not exist yet.
+
+### 2026-07-21 23:12 CST ? Safe implementation design frozen
+
+- **Changed**: Replaced the active header of `docs/implementation.md` with the independent `edgetwincal_safe_v1` guide while retaining the sealed `msn2026_v1` implementation as a provenance appendix.
+- **Contracts**: Froze project-owned modules, tensor/data APIs, physical test-shard tokening, APN pairing, group-Huber block ridge, bounded envelope, validation gate, eight-variant registry, state machine, statistics, and fail-closed device timing.
+- **Execution size**: Declared 10 APN training manifests and 80 paired evaluation manifests across two targets, five seeds, four main methods, and four ablations.
+- **How to Run**: Added the required Safe CLI contract to the implementation guide. It is declarative until the CLI and smoke tests are implemented.
+
+### 2026-07-21 23:24 CST ? Safe paired aggregator implemented
+
+- **Code**: Added `safe_aggregate.py` with strict 2-target x 5-seed x 8-variant completeness/pairing checks, pooled MSE/MAE, per-seed rows, crossed group-by-checkpoint bootstrap, Holm families, the 1% harm ceiling, 0.1% Joint non-inferiority, two-module ablation support, and fail-closed PASS/ABANDON timing authorization.
+- **Tests**: Added synthetic complete-pass, disabled-gate, Joint-inferiority, missing-matrix, and paired-provenance rejection coverage in `test_edgetwincal_safe_aggregate.py`.
+- **How to Run**: The aggregate API is available; CLI wiring remains pending.
+
+### 2026-07-21 23:27 CST ? Safe aggregator syntax repair
+
+- **Fixed**: Corrected one malformed f-string subscript introduced by the Windows unified-patch transport in `safe_aggregate.py`. No experiment semantics changed.
+- **How to Run**: Re-running the focused aggregate tests next.
+
+### 2026-07-21 23:38 CST ? Safe once-only ledger and evaluation artifacts implemented
+
+- **Code**: Added `safe_campaign.py` with an independent frozen ledger, hashed in-memory-only test tokens, per-target once-only open/close/seal transitions, canonical tensor hashes, group-level SSE/SAE/N, private prediction payloads, and non-overwriting evaluation manifests.
+- **Tests**: Added ledger transition/token secrecy, paired metric/cell/private-array, overwrite refusal, and non-finite prediction coverage.
+- **How to Run**: Low-level campaign APIs are available; the end-to-end CLI remains pending.
+
+### 2026-07-21 23:40 CST ? Windows-safe atomic tensor flush
+
+- **Fixed**: Opened the temporary torch payload in read/write binary mode before `fsync`, resolving Windows error 9 during private evaluation-array serialization.
+- **How to Run**: Re-running the focused campaign tests.
+
+### 2026-07-21 23:40 CST - BVSE Safe selection and dataset gate implemented
+
+- **Code**: Added validation-only deterministic group splitting, group metrics, gain-concentration auditing, bounded combined corrections, exact APN clone fallback, frozen cap/shrink candidate selection, and ablation semantics in `safe.py`.
+- **Gate**: Added the five-checkpoint crossed group-by-checkpoint bootstrap gate with APN harm ceilings, Joint non-inferiority, anomalous-checkpoint rejection, auditable hashes, and configurable resample counts.
+- **Tests**: Added focused coverage for cap/shrink order, bitwise fallbacks, order-invariant splits, tie order, confidence and group failures, no-envelope raw retention, and stable/anomalous five-seed gates.
+- **How to Run**: `python -m pytest code/tests/test_edgetwincal_safe_gate.py -q`.
+### 2026-07-21 23:20 CST ? GRJF robust core implemented (focused verification pending)
+
+- **Added**: New isolated code/src/edgetwincal/robust.py and code/tests/test_edgetwincal_safe_robust.py; no sealed EdgeTwinCal module was modified.
+- **Contract**: Deterministic CPU float64 group-balanced Huber block ridge with N/(G*n_g) weights, weighted median/MAD scaling, separate latent/cross penalties, unpenalized intercept, feature-z clipping, zero-diagonal joint features, and explicit audited zero-cell fallbacks.
+- **Ablations**: observation_weighted changes only row weighting and squared_loss changes only the robust loss; BVSE correction caps remain outside this module.
+- **Verification**: Focused synthetic coverage was added for duplication/outlier/reorder behavior, degenerate and invalid cells, adapter shapes, finite state, zero diagonal, and both ablation switches. The focused pytest command is the next action.
+- **How to Run**: No user-facing Safe CLI exists yet, so the run manual remains unchanged.
+### 2026-07-21 23:42 CST ? GRJF focused verification passed
+
+- **Result**: .conda/envs/evipatch/python.exe -m pytest code/tests/test_edgetwincal_safe_robust.py -q -p no:cacheprovider completed with 6 passed in 1.58 s.
+- **Review**: Python compilation and git diff --check passed. The only test adjustment changed the zero-diagonal precision probe to float64; solver behavior was unchanged.
+- **Status**: GRJF core is run-verified. BVSE caps and deployment gates remain outside robust.py as designed.
+- **How to Run**: The focused developer command above is reproducible; no user-facing Safe CLI was added by this module.
+
+### 2026-07-21 23:45 CST - Safe production floors and ledger contract
+
+- **Protocol alignment**: Raised production Safe selection and dataset-gate defaults to at least 20 groups and 400 observed cells; low thresholds remain explicit test-only overrides.
+- **Audit API**: Dataset gate decisions now retain actual checkpoint/group/cell counts and expose `ledger_fields()` with enabled, checkpoints, validation_groups, validation_cells, and gate_sha256.
+- **Tests**: Added frozen-default, insufficient-cell, and exact ledger-mapping coverage.
+- **How to Run**: `python -m pytest code/tests/test_edgetwincal_safe_gate.py -q`.
+
+### 2026-07-21 23:47 CST ? Safe paired-state runner implemented
+
+- **Code**: Added `safe_runner.py` to fit ordinary Joint, original Full, the full robust alpha grid, and controlled no-balance/no-robust states from adapter-train plus `val_select` only. It applies the frozen eight-variant registry and builds the five-checkpoint `val_safety` decision without any test API.
+- **Pairing**: All variants share frozen base/latent/source tensors; ablations reuse the selected main penalties and envelope so each changes only its declared mechanism. Dataset-gate rejection makes `Safe` an exact APN clone while retaining `SafeNoGate`.
+- **Tests**: Added focused variant-order, bounded correction, raw ablation, and exact fallback coverage.
+- **How to Run**: Runner is library-wired; CLI integration remains pending.
+
+### 2026-07-21 23:52 CST - Frozen Safe config and holdout isolation data plane
+
+- **Config**: Added strict immutable `safe_v1.json` parsing for the two official sources, exact Beijing/Intel chronological protocols, five seeds, frozen APN settings, method registry, and exact-value robust/envelope/gate/statistics thresholds.
+- **Data isolation**: Added root-bounded manifests, timestamp-first physical pre-test/test routing, train-only normalization, deterministic whole-group validation routing, pseudonymous IDs, APN history-axis time marks, preserved APN-facing group IDs, masked loaders, and a token-hashed once-only test ledger. Pre-test preparation never parses numeric test values.
+- **Tests**: Focused synthetic checks cover strict schema/value drift rejection, path escape, split/group/target disjointness, train-only normalization, reorder-stable rows and IDs, exact APN markers and extracted group identity, test-reader inaccessibility, invalid tokens, and once-only consumption; 11 passed.
+- **How to Run**: `.\.conda\envs\evipatch\python.exe -m pytest code\tests\test_edgetwincal_safe_config.py code\tests\test_edgetwincal_safe_data.py -q -p no:cacheprovider`.
+
+### 2026-07-21 23:51 CST ? Gate deployment semantics aligned
+
+- **Fixed**: `DatasetSafetyDecision.enabled` now means the Safe deployment actually passed the validation gate; a rejected gate records `enabled=false` and exact APN fallback instead of merely indicating that an audit ran.
+- **Runner**: Uses the gate object's canonical `ledger_fields()` rather than independently reconstructing checkpoint/group/cell counts, while retaining a local cross-check count.
+- **How to Run**: Re-running Safe gate and runner tests.
+
+### 2026-07-22 00:02 CST ? Official Safe sources downloaded and hashed
+
+- **ResearchPilot Phase E action**: After config/data/solver/gate synthetic tests passed, downloaded only the two predeclared official raw objects into the ignored `data/edgetwincal_safe_v1/raw` namespace. No sealed-test value was parsed or opened.
+- **Beijing source**: 7,959,991 bytes, SHA256 `d1b9261c54132f04c374f762f1e5e512af19f95c95fd6bfa1e8ac7e927e3b0b8`, exactly matching the frozen expected digest.
+- **Intel source**: 34,422,518 bytes, observed SHA256 `d99288c8f406ca6604d359ceaa0d8adfffa79e7095061a1e27dc4399f48c7225`; the config intentionally had no upstream-published expected digest, so the observed digest is frozen in its raw manifest.
+- **Isolation**: Both manifests and objects are under `msn2`; neither raw object is tracked or package-eligible.
+- **How to Run**: The forthcoming CLI `download` command wraps the same verified data API.
+
+### 2026-07-22 00:09 CST ? Intel official incomplete-row handling frozen
+
+- **Observed source condition**: The official Intel object contains 526 timestamp-only three-field records among 2,313,682 lines; they contain no mote or temperature and cannot contribute a measurement. The first run stopped before writing an Intel shard.
+- **Code**: Timestamp routing now audits and skips only rows with a valid date/time but fewer than five fields. It still fails on a row lacking timestamp fields, parses no missing test value, and records `discarded_unusable_rows` in the pre-test manifest. Beijing records zero discarded rows.
+- **Tests**: Added a synthetic pre-test and sealed-test malformed-row case proving usable rows remain, unusable rows are counted, and no value is fabricated.
+- **How to Run**: Re-run the focused Safe data suite, then retry Intel pre-test preparation; existing Beijing prepared files remain immutable.
+
+### 2026-07-22 00:11 CST ? Intel discard audit constructor repair
+
+- **Fixed**: Moved the new discarded-row counter into the `PretestManifest` constructor after the first focused collection exposed an indentation error. Protocol behavior is unchanged.
+- **How to Run**: Re-running `test_edgetwincal_safe_data.py` before touching the official Intel shard.
+
+### 2026-07-22 00:13 CST ? Intel malformed-row fixture boundary corrected
+
+- **Test only**: Moved the synthetic sealed rows from the exclusive test end timestamp to the actual test start. This now exercises one usable sealed row plus one unusable timestamp-only sealed row.
+- **How to Run**: Re-running the focused data suite.
+
+### 2026-07-22 00:17 CST ? Pre-test shards and feasibility audit complete
+
+- **Isolation result**: Beijing pre-test/sealed raw counts are 360,966/52,128; Intel counts are 357,440/213,875 with 526 timestamp-only unusable records audited. The sealed shards remain token-unopened and their numeric fields have not been parsed.
+- **Beijing windows**: train 8,281 (1,036 groups), APN val 473 (60), adapter 481 (61), val_select 241 (31), val_safety 729 (92). Target cells are respectively 2,335,246; 135,006; 134,629; 67,794; 205,267. Train-only normalizer SHA256 is `d90a294712c05187b4eedb82e7c9f5a10f0b36a4fdd9416cfb17e1045ea15690`.
+- **Intel windows**: train 1,629 (136 groups), APN val 189 (16), adapter 381 (32), val_select 180 (20), val_safety 180 (20). Target cells are 917,192; 80,532; 205,382; 83,760; 84,286. Train-only normalizer SHA256 is `73121077393cea72bb593548ce9b2a9a206a2039c09689a1c4ebc1c5fa12bf05`.
+- **No tuning**: Intel per-mote train counts are heterogeneous (35--4,498), but the predeclared 1--54 channel set and all thresholds remain unchanged; sparse output cells will use the already frozen zero-correction fallback.
+- **How to Run**: Next actions are protocol-conformance fixes identified by the integration audit, full synthetic smoke, then sequential APN training.
+
+### 2026-07-22 00:22 CST ? Real APN train-only 100-step smoke passed
+
+- **Device**: Official patched APN in `apn` mode ran on NVIDIA GeForce RTX 4090 with finite gradients; no checkpoint or test loader was created.
+- **Beijing**: 4,949 parameters, 100 Adam steps in 2.958 s (33.81 step/s), peak allocated CUDA memory 41,328,640 bytes; masked train loss moved 0.9124 -> 0.8039 over 902,214 observed target cells.
+- **Intel**: 7,007 parameters, 100 Adam steps in 5.699 s (17.55 step/s), peak allocated CUDA memory 98,489,856 bytes; masked train loss moved 0.9762 -> 0.3360 over 1,801,371 observed target cells.
+- **Forecast**: Even a full 200-epoch upper bound for all ten small APN checkpoints is compatible with the one-day budget; early stopping should reduce it further. This timing does not authorize or claim edge latency.
+- **How to Run**: The smoke will be exposed by the Safe CLI; formal training waits for the remaining protocol-conformance tests.
+
+### 2026-07-22 00:41 CST -- EdgeTwinCal-Safe end-to-end CLI and crash-only recovery
+
+- **ResearchPilot Phase E/F action**: Added the independent `edgetwincal_safe_v1` control plane and entry script without changing the pinned APN baseline or sealed `msn2026_v1` campaign.
+- **APN training**: `train` wraps every project-owned batch through `as_apn_batch`, preserves `group_ID`, uses a re-iterable loader for all epochs, and calls `train_apn_train_val`. Checkpoints live at `results/edgetwincal_safe_v1/backbones/<dataset>/seed_<seed>/`; seeds and datasets execute sequentially.
+- **Intentional new-data adaptation**: Safe uses the pre-frozen global masked micro-MSE validation early-stopping rule because it matches the new campaign primary metric and all four compared methods share each checkpoint. This is not claimed as byte-for-byte P12 training parity.
+- **Deterministic CUDA**: The entry script sets `CUBLAS_WORKSPACE_CONFIG=:4096:8` before importing PyTorch when absent and fails closed on incompatible pre-existing values. The value is recorded in training/evaluation provenance; `HOME` and `CODEX_HOME` remain untouched.
+- **Vendor provenance**: Every APN model construction verifies upstream commit `f0d6eeb7a2ee2d7c76475bf725b7ea25f98af3f4`, `patches/apn_evipatch.patch` SHA256, and patched `vendor/APN/models/APN.py` SHA256 before use.
+- **Pre-test fitting**: `fit` extracts only `adapter`/`val_select`/`val_safety` under constant cross-seed protocol ID `safe_v1`, persists private tensor caches and `SafeSeedStates`, and cross-checks config/checkpoint/normalizer/cache/state/manifest hashes. Robust row threshold remains `max(100, 4*p)` (`minimum_rows=None`).
+- **Validation gate**: Standalone `gate` loads five persisted states and `val_safety` caches only; it has no sealed-test token or reader path.
+- **Once-only test with crash recovery**: A normal first run freezes both campaign/data ledgers, consumes each raw sealed shard once, immediately materializes an immutable private test-window cache, and binds its SHA256 to dataset/config/normalizer/protocol/gate hashes. A crash-active ledger resumes only from that cache and fills missing seed-by-variant manifests; complete artifacts are validated and not rewritten. A sealed campaign rejects another test.
+- **Aggregation/timing**: `aggregate` requires the sealed 2-by-5-by-8 paired matrix. `require_device_timing_authorized` makes CPU/Jetson timing unreachable unless the final report is `PASS`.
+- **Verification**: The focused CLI/config/data suite passed 21 tests; official Beijing/Intel CPU APN smokes were finite and did not open a test loader. The complete Safe suite subsequently passed 50 tests.
+- **How to Run**:
+  - `.\.conda\envs\evipatch\python.exe code\scripts\run_edgetwincal_safe.py smoke --dataset beijing_air --seed 2024 --device cuda:0`
+  - Replace `smoke` with `train`, then repeat `train` sequentially for all five seeds on both datasets.
+  - Run `fit` for the same ten dataset/seed pairs, followed by `gate`, `test --device cuda:0`, and `aggregate`.
+
+
+
+### 2026-07-22 00:55 CST ? EdgeTwinCal-Safe protocol-conformance audit closed
+
+- **Group-robust selection**: Positive-gain concentration now uses per-group MSE rather than SSE, and leave-one-group-out evaluates the remaining groups'' macro-MSE. Candidate and alpha ties use the frozen `1e-4` tolerance, then lower shrink, lower cap, and stronger block regularization; raw validation micro-MSE no longer selects alpha.
+- **Validation-only dataset gate**: One RNG now supplies shared group and checkpoint multiplicities for APN/Joint/Safe micro-MSE, group-macro-MSE, and micro-MAE. Deployment requires APN point non-degradation and one-sided 1% harm bounds, reliable positive APN micro-MSE gain, Joint macro-MSE point/UCB within 0.5%, at least four of five checkpoint gains, nonnegative macro leave-one-group-out gain, concentration at most 0.25, and the retained per-checkpoint 1% harm guard. Failure remains an exact APN clone.
+- **Provenance and aggregation**: Evaluation manifests now hash predictions and targets. Aggregation pairs config/split/normalizer/sample/group/mask/target/protocol/gate hashes across all variants and seeds, verifies the gate-decision hash, and proves disabled Safe predictions hash-identically match APN. The campaign ledger schema is now `edgetwincal.safe-campaign-test-ledger.v1`, distinct from the data ledger. All four ablations are globally reported with one Holm family; only NoRobust and NoBound are required mechanism gates, while NoBalance and NoGate remain diagnostics.
+- **Verification**: All 55 Safe config/data/robust/gate/runner/campaign/aggregate/CLI tests passed. The sole warning is pytest''s inability to create its optional workspace cache and does not affect results.
+- **How to Run**: `$env:PYTHONPATH='code/src'; .\.conda\envs\evipatch\python.exe -m pytest code/tests/test_edgetwincal_safe_config.py code/tests/test_edgetwincal_safe_data.py code/tests/test_edgetwincal_safe_robust.py code/tests/test_edgetwincal_safe_gate.py code/tests/test_edgetwincal_safe_runner.py code/tests/test_edgetwincal_safe_campaign.py code/tests/test_edgetwincal_safe_aggregate.py code/tests/test_edgetwincal_safe_cli.py -q`
+
+### 2026-07-22 -- EdgeTwinCal-Safe ten-checkpoint training complete
+
+- **ResearchPilot Phase F action**: Completed the frozen two-dataset by five-seed APN matrix sequentially on one RTX 4090. The command output is retained at `logs/edgetwincal_safe_v1/train_all.log` (359,460 bytes); no test loader or sealed value was opened.
+- **Integrity**: All 10 manifests report `status=complete`; every checkpoint SHA256 matches its manifest, every run records the same Safe config and train-only normalizer, and every `test_constructed` flag is false.
+- **Beijing**: Seeds 2024--2028 stopped after 18/21/20/17/14 epochs with best validation masked micro-MSE 0.623929/0.620892/0.624780/0.621528/0.623685. Wall times were 118.7/140.3/133.4/112.0/93.6 seconds; each model has 4,949 parameters.
+- **Intel**: Seeds 2024--2028 stopped after 40/22/78/24/18 epochs with best validation masked micro-MSE 14.011420/13.007040/26.851669/13.148166/12.891948. Wall times were 125.6/68.7/247.4/75.1/56.4 seconds; each model has 7,007 parameters. The high seed-2026 variance is retained and will be handled by the predeclared five-checkpoint validation gate, not tuned away.
+- **How to Run**: `.\.conda\envs\evipatch\python.exe code\scripts\run_edgetwincal_safe.py train --dataset all --seed all --device cuda:0`; completed cells resume only after checkpoint/manifest hash validation. Next run the matching `fit`, then `gate`; physical test remains closed until both validation gates and ledgers validate.
+
+### 2026-07-22 -- Safe adapter matrix and validation-only gates complete
+
+- **ResearchPilot Phase F action**: Completed all 10 adapter cells with the frozen 6-by-6 alpha grid, bounded-envelope grid, Joint/Full controls, and four ablation states. Ten fit caches, ten states, and ten public fit manifests are present and hash-consistent; `logs/edgetwincal_safe_v1/fit_all.log` retains the command output.
+- **Beijing selection**: All five checkpoints selected feasible Safe candidates. Their `val_select` MSE gains versus APN were 2.223%, 2.460%, 6.439%, 2.132%, and 1.378%; no checkpoint fell back.
+- **Intel selection**: Seeds 2024--2027 returned `no_feasible_candidate` and exact APN fallback. Seed 2028 selected `cap=2, shrink=1` with 1.356% `val_select` MSE gain. All failures and raw candidate audits are retained.
+- **Dataset gate**: Beijing passed on disjoint `val_safety`: pooled Safe/APN MSE 0.189561/0.194690 (2.634% relative gain; shared-bootstrap gain CI lower bound 0.686%), 5/5 checkpoint gains, and Safe also beat Joint by 7.313%. Intel failed with only 1/5 gains, unreliable efficacy CI, and material Joint inferiority; deployment is an exact APN clone with reasons `apn_mse_gain_unreliable`, `efficacy_ci`, `joint_macro_point`, `joint_macro_ucb`, and `checkpoint_consistency`.
+- **Decision implication**: The final requirement of positive results on two new targets can no longer pass. Complete the predeclared once-only test matrix and statistics to retain all outcomes, but do not run CPU/Jetson timing and do not alter the method.
+- **How to Run**: `.\.conda\envs\evipatch\python.exe code\scripts\run_edgetwincal_safe.py fit --dataset all --seed all --device cuda:0`, followed by `.\.conda\envs\evipatch\python.exe code\scripts\run_edgetwincal_safe.py gate`. Both commands are complete and resume only after hash validation; the next and only test-opening command is `test --device cuda:0`.
+
+### 2026-07-22 -- Once-only test, paired statistics, and ABANDON
+
+- **ResearchPilot Phase F action**: After both validation decisions were frozen, opened each physical test shard exactly once, materialized immutable recovery caches, and completed the full two-dataset by five-seed by eight-variant matrix. The campaign ledger is sealed, 80/80 manifests completed, no crash resume occurred, and protocol SHA256 is `0ad544dbaef79fb07c16aa894d99eeeab42b5df2993ba6bd4c85098cb1fb6854`.
+- **Beijing test**: APN/Joint/Full/Safe pooled MSE is 0.886283/0.874270/0.874231/0.890569; Safe is 0.484% worse than APN (95% relative-gain CI -1.289% to +0.208%) and 1.864% worse than Joint (95% CI -3.033% to -0.542%). Seed 2026 harms APN by 1.282%, breaching the 1% ceiling.
+- **Intel test**: Gate-disabled Safe exactly equals APN at MSE 434.928686 and MAE 18.427934. Joint has MSE 427.355942, while the paired Safe-vs-Joint CI is too wide for non-inferiority. All five exact-fallback hashes passed.
+- **Final decision**: `ABANDON`. Two positive targets, per-target/seed harm, Joint non-inferiority, enabled gates, and both required module checks all failed. No further method change, new baseline, CPU/Jetson timing, paper expansion, or ZIP packaging is authorized.
+- **Outputs**: Added compact, non-private JSON/CSV/Markdown artifacts under `artifacts/edgetwincal_safe_v1`; raw data, checkpoints, fit caches, private predictions, and ledgers remain ignored under `data/` and `results/`.
+
+### 2026-07-22 -- Compact result workbook and delivery audit complete
+
+- **Spreadsheet artifact**: Added `EdgeTwinCal-Safe_results.xlsx` with Overview, Summary, PerSeed, PairedStats, and Ablations sheets. Formula inspection matched zero errors, all five sheets were rendered for visual QA, and the workbook contains no macros, external links, or raw identifiers.
+- **Public integrity**: Rebuilt the concise result record as valid UTF-8, generated `SHA256SUMS.csv` for all ten payload files, and independently reconciled every JSON/CSV/XLSX row against the aggregate report.
+- **Isolation audit**: The public artifact directory contains no raw data, checkpoint, prediction array, test cache, sample identifier, credential, absolute user path, or file larger than 100 MB.
+- **Decision**: The final verdict remains `ABANDON`; device timing, paper expansion, and ZIP packaging remain intentionally blocked.
+- **How to Run**: `.\.conda\envs\evipatch\python.exe code\scripts\run_edgetwincal_safe.py aggregate`; inspect `artifacts\edgetwincal_safe_v1\RESULTS.md` and validate payload hashes with `SHA256SUMS.csv`.

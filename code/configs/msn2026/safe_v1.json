@@ -1,0 +1,135 @@
+{
+  "schema_version": "edgetwincal.safe.v1",
+  "campaign": {
+    "id": "edgetwincal_safe_v1",
+    "track": "Edge Computing, IoT and Digital Twins",
+    "seeds": [2024, 2025, 2026, 2027, 2028],
+    "main_variants": ["APN", "Joint", "Full", "Safe"],
+    "ablation_variants": ["SafeNoBalance", "SafeNoRobust", "SafeNoBound", "SafeNoGate"],
+    "test_policy": "validation_gate_then_once_only",
+    "old_datasets_policy": "diagnostic_only"
+  },
+  "paths": {
+    "raw": "data/edgetwincal_safe_v1/raw",
+    "pretest": "data/edgetwincal_safe_v1/pretest",
+    "sealed_test": "data/edgetwincal_safe_v1/sealed_test",
+    "results": "results/edgetwincal_safe_v1",
+    "artifacts": "artifacts/edgetwincal_safe_v1",
+    "logs": "logs/edgetwincal_safe_v1"
+  },
+  "apn": {
+    "repository": "https://github.com/decisionintelligence/APN.git",
+    "commit": "f0d6eeb7a2ee2d7c76475bf725b7ea25f98af3f4",
+    "d_model": 24,
+    "npatch": 12,
+    "te_dim": 8,
+    "dropout": 0.1,
+    "batch_size": 32,
+    "optimizer": "Adam",
+    "learning_rate": 0.01,
+    "epochs": 200,
+    "patience": 10,
+    "loss": "masked_mse"
+  },
+  "datasets": {
+    "beijing_air": {
+      "title": "UCI Beijing Multi-Site Air Quality",
+      "source": {
+        "landing_url": "https://archive.ics.uci.edu/dataset/501/beijing+multi+site+air+quality+data",
+        "download_url": "https://archive.ics.uci.edu/ml/machine-learning-databases/00501/PRSA2017_Data_20130301-20170228.zip",
+        "filename": "PRSA2017_Data_20130301-20170228.zip",
+        "expected_sha256": "d1b9261c54132f04c374f762f1e5e512af19f95c95fd6bfa1e8ac7e927e3b0b8"
+      },
+      "value_field": "PM2.5",
+      "channels": [
+        "Aotizhongxin", "Changping", "Dingling", "Dongsi", "Guanyuan",
+        "Gucheng", "Huairou", "Nongzhanguan", "Shunyi", "Tiantan",
+        "Wanliu", "Wanshouxigong"
+      ],
+      "aggregation": "identity",
+      "frequency_seconds": 3600,
+      "history_steps": 72,
+      "forecast_steps": 24,
+      "stride_steps": 3,
+      "interpolation": "none",
+      "grouping": "utc_calendar_day",
+      "id_salt": "edgetwincal-safe-msn2026-beijing-air-v1:",
+      "partitions": [
+        {"name": "train", "start": "2013-03-01T00:00:00", "end": "2016-01-01T00:00:00"},
+        {"name": "val", "start": "2016-01-01T00:00:00", "end": "2016-03-01T00:00:00"},
+        {"name": "adapter", "start": "2016-03-01T00:00:00", "end": "2016-05-01T00:00:00"},
+        {"name": "val_select", "start": "2016-05-01T00:00:00", "end": "2016-06-01T00:00:00"},
+        {"name": "val_safety", "start": "2016-06-01T00:00:00", "end": "2016-09-01T00:00:00"},
+        {"name": "test", "start": "2016-09-01T00:00:00", "end": "2017-03-01T00:00:00"}
+      ],
+      "validation_group_split": null
+    },
+    "intel_lab": {
+      "title": "Intel Berkeley Research Lab Sensor Data",
+      "source": {
+        "landing_url": "https://db.csail.mit.edu/labdata/labdata.html",
+        "download_url": "https://db.csail.mit.edu/labdata/data.txt.gz",
+        "filename": "data.txt.gz",
+        "expected_sha256": null
+      },
+      "value_field": "temperature",
+      "channels": {"integer_range": [1, 54]},
+      "aggregation": "median_5min",
+      "frequency_seconds": 300,
+      "history_steps": 72,
+      "forecast_steps": 12,
+      "stride_steps": 3,
+      "interpolation": "none",
+      "grouping": "utc_3_hour_block",
+      "id_salt": "edgetwincal-safe-msn2026-intel-lab-v1:",
+      "partitions": [
+        {"name": "train", "start": "2004-02-28T00:00:00", "end": "2004-03-16T00:00:00"},
+        {"name": "val", "start": "2004-03-16T00:00:00", "end": "2004-03-18T00:00:00"},
+        {"name": "adapter", "start": "2004-03-18T00:00:00", "end": "2004-03-22T00:00:00"},
+        {"name": "validation_pool", "start": "2004-03-22T00:00:00", "end": "2004-03-27T00:00:00"},
+        {"name": "test", "start": "2004-03-27T00:00:00", "end": "2004-04-06T00:00:00"}
+      ],
+      "validation_group_split": {
+        "group_seconds": 10800,
+        "hash": "sha256",
+        "modulus": 2,
+        "val_select_buckets": [0],
+        "val_safety_buckets": [1]
+      }
+    }
+  },
+  "robust_fit": {
+    "alpha_latent": [1, 10, 100, 1000, 10000, 100000],
+    "alpha_cross": [1, 10, 100, 1000, 10000, 100000],
+    "huber_delta": 1.345,
+    "max_iterations": 25,
+    "tolerance": 1e-8,
+    "scale_floor": 1e-6,
+    "feature_clip": 5.0,
+    "minimum_groups": 20,
+    "minimum_rows": 100,
+    "rows_per_parameter": 4
+  },
+  "safe_envelope": {
+    "kappa": [0.25, 0.5, 1.0, 2.0],
+    "shrinkage": [0.25, 0.5, 0.75, 1.0],
+    "fallback_shrinkage": 0.0
+  },
+  "validation_gate": {
+    "bootstrap_draws": 10000,
+    "bootstrap_seed": 20260721,
+    "minimum_groups": 20,
+    "minimum_target_cells": 400,
+    "apn_harm_ucb": 0.01,
+    "joint_macro_harm_ucb": 0.005,
+    "minimum_seed_gains": 4,
+    "maximum_gain_concentration": 0.25
+  },
+  "statistics": {
+    "bootstrap_draws": 50000,
+    "bootstrap_seed": 20260721,
+    "confidence": 0.95,
+    "multiple_testing": "holm",
+    "joint_noninferiority_margin": 0.001
+  }
+}

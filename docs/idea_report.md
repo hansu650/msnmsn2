@@ -4,6 +4,47 @@ Changes: Activated the confirmatory EdgeTwinCal lab handoff, separated the
 legacy pilot from the locked msn2026_v1 protocol, and froze mechanism semantics.
 -->
 
+
+## Current Active Route: EdgeTwinCal-Safe Final Confirmatory Campaign
+
+> Status: design frozen before candidate data values or either sealed test period are read. The earlier `msn2026_v1` campaign remains sealed and diagnostic only.
+
+### Claim and two-module method
+
+EdgeTwinCal-Safe keeps the pinned APN backbone and lightweight post-hoc residual calibration. It targets the IEEE MSN 2026 `Edge Computing, IoT and Digital Twins` track by asking whether a frozen edge sensor forecaster can acquire cross-sensor residual correction while refusing unsafe deployment shifts. It does not change APN, its loss, decoder, patching, or checkpoints.
+
+- **Module A ? Group-Equalized Robust Joint Residual Fit (GRJF).** For every forecast horizon and target channel, concatenate the target APN latent with zero-diagonal forecasts from the other sensors. Fit the APN residual using a group-balanced Huber ridge: each validation-independent temporal group receives equal total weight, robust weighted median/MAD scaling is computed from adapter-train only, standardized features are clipped to `[-5,5]`, and an unpenalized intercept is solved by deterministic IRLS.
+- **Module B ? Bounded Validation Safety Envelope (BVSE).** Clip the final combined correction, rather than either feature block separately, to `kappa` times its adapter-train robust residual scale and shrink it by `lambda`. A disjoint validation-safety split audits the selected candidate across all five checkpoints. If reliability is not demonstrated, `Safe` returns a bitwise APN clone for every checkpoint.
+
+The four fair main methods are the same frozen APN prediction, original sequential EdgeTwinCal (`Full`), ordinary block-penalty `Joint` ridge, and `Safe`. The main ablations are `SafeNoBalance`, `SafeNoRobust`, `SafeNoBound`, and `SafeNoGate`. Raw pre-gate candidates are retained in audit artifacts even when deployment falls back.
+
+### Untouched sensor-network targets
+
+Both targets are new to this workspace and are frozen before download/inspection. Normalization uses the APN-train interval only; missing values remain missing and are represented by masks.
+
+1. **Beijing multi-site PM2.5 network.** The 12 official stations are channels. Windows use 72 hourly history steps, 24 hourly forecast steps, and a 3-hour stride. Target-time partitions are APN train `[2013-03-01,2016-01-01)`, APN validation `[2016-01-01,2016-03-01)`, adapter train `[2016-03-01,2016-05-01)`, `val_select` `[2016-05-01,2016-06-01)`, `val_safety` `[2016-06-01,2016-09-01)`, and sealed test `[2016-09-01,2017-03-01)`. A sample''s inference group is its UTC calendar day. Salt: `edgetwincal-safe-msn2026-beijing-air-v1:`.
+2. **Intel Lab temperature network.** Fixed mote IDs 1--54 are channels after deterministic 5-minute median bins, with no interpolation. Windows use 72 bins (6 h) of history, 12 bins (1 h) of forecast, and a 3-bin (15 min) stride. Target-time partitions are APN train `[2004-02-28,2004-03-16)`, APN validation `[2004-03-16,2004-03-18)`, adapter train `[2004-03-18,2004-03-22)`, validation audit pool `[2004-03-22,2004-03-27)`, and sealed test `[2004-03-27,2004-04-06)`. Three-hour UTC blocks in the audit pool are assigned whole to `val_select` or `val_safety` by SHA256, never split across them. Salt: `edgetwincal-safe-msn2026-intel-lab-v1:`.
+
+Five paired APN checkpoints use seeds `2024--2028`. APN settings are fixed for both targets: `d_model=24`, `apn_npatch=12`, `apn_te_dim=8`, dropout `0.1`, batch size `32`, Adam learning rate `0.01`, at most 200 epochs, patience 10, and masked MSE. Every method and ablation shares each checkpoint, split, mask, normalization state, and sample/group identity.
+
+### Frozen fitting and selection
+
+For an output cell with `N` valid adapter rows in `G` groups and `n_g` rows in group `g`, row weight is `N/(G*n_g)`. Weighted median/MAD scaling uses floor `1e-6`; standardized features are clipped at 5. Huber delta is `1.345`; IRLS uses float64, at most 25 iterations, and relative coefficient tolerance `1e-8`. The latent and cross-sensor ridge penalties independently use `{1,10,100,1000,10000,100000}`. A cell is correctable only with at least `max(100,4p)` valid rows and 20 groups; otherwise its correction is zero.
+
+`val_select` alone selects the two penalties and the envelope grids `kappa in {0.25,0.5,1,2}` and `lambda in {0.25,0.5,0.75,1}`. Lambda zero is never a candidate; it is reserved for exact APN fallback. A candidate must have non-worse APN micro MSE, group-macro MSE, and micro MAE point estimates, no leave-one-group-out macro-MSE loss, positive-gain concentration at most 0.25, and no more than 0.5% macro-MSE loss relative to Joint. Ties within `1e-4` prefer smaller `lambda`, smaller `kappa`, then stronger penalties.
+
+`val_safety` is used once, after all candidates are frozen, for a dataset-level gate across the five checkpoints. A 10,000-draw crossed group-by-checkpoint paired bootstrap with seed `20260721` requires non-worse APN MSE/MAE point estimates, one-sided 95% relative-harm upper bounds at most 1%, a Joint macro-MSE harm upper bound at most 0.5%, at least four of five checkpoint MSE improvements, nonnegative leave-one-group-out gain, concentration at most 0.25, at least 20 groups, and at least 400 valid target cells. Failure disables Safe for all five checkpoints and produces exact APN predictions; it is not reported as a successful safety result.
+
+### Once-only test and stopping rule
+
+Only datasets with a frozen five-checkpoint validation decision may open the physical test shard. Test evaluation performs no fitting or selection. It stores per-seed MSE/MAE and group-by-checkpoint `SSE/SAE/N` for all four main methods and all ablations. Inference uses 50,000 shared crossed paired-bootstrap draws, raw percentile 95% CIs, and Holm correction within predeclared comparison families.
+
+A new target is positive only when Safe is enabled, pooled MSE improves over APN with a 95% CI lower bound above zero and Holm one-sided `p<0.05`, at least four of five seeds improve, and MSE/MAE harm upper bounds are at most 1%. The global outcome is `PASS` only if both new targets are positive, no target or seed degrades over 1% in MSE or MAE, and Safe is non-inferior to Joint at a frozen 0.1% relative-MSE margin in both point estimate and CI. The ablations must support both GRJF and BVSE. Any efficacy failure is `ABANDON` with no threshold change or new module. Real CPU/Jetson latency and memory are measured only after `PASS`; missing real Jetson access is `BLOCKED`, and materially worse resource behavior or failure against Joint changes the final verdict to `ABANDON`.
+
+### Resource and integrity boundary
+
+The expected matrix is 10 APN trainings, 40 main comparison manifests, and 40 ablation manifests, run sequentially on the single GPU. Estimated end-to-end time is 6--10 hours. All raw data, caches, checkpoints, logs, ledgers, results, and packages stay under `msn2`. The official sources and SHA256 hashes are recorded; raw data, checkpoints, environments, caches, and vendor APN source are never committed or packaged.
+
 ## Current Active Route: EdgeTwinCal Confirmatory Lab Campaign
 
 > Status: protocol repair and pre-test implementation; no new test split opened.

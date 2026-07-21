@@ -1,0 +1,5 @@
+"variant","relative_gain","relative_gain_ci_low","one_sided_p","holm_adjusted_p","required_for_gate","diagnostic_only","supported"
+"SafeNoBalance","-0.003059849479732826","-0.006178918524608509","0.9777204455910882","1.0","False","True","False"
+"SafeNoBound","0.005527378050892442","-0.0073437023909753716","0.25525489490210196","1.0","True","False","False"
+"SafeNoGate","-0.0037968752292196982","-0.007075154486960306","0.9946801063978721","1.0","False","True","False"
+"SafeNoRobust","-0.00423829148444586","-0.0076626084314032296","0.999980000399992","1.0","True","False","False"

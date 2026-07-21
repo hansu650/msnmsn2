@@ -1,6 +1,155 @@
-# Active Implementation Guide ? EdgeTwinCal msn2026_v1 Lab Campaign
-> Updated: 2026-07-21 | Status: design frozen before coding
-> Authority: EdgeTwinCal_Lab_Experiment_Handoff_20260721
+# Active Implementation Guide ? EdgeTwinCal-Safe Final Campaign
+> Updated: 2026-07-21 | Status: frozen pre-data implementation design
+> Authority: latest user EdgeTwinCal-Safe override; ResearchPilot C/D/E/F
+
+## 0 Isolation and immutability
+
+All writes resolve beneath `C:\Users\qintian\Desktop\msn2`; path checks fail closed. `HOME`, `CODEX_HOME`, the sibling `Desktop\msn`, and every path outside this root are forbidden. The APN upstream remains pinned at `f0d6eeb7a2ee2d7c76475bf725b7ea25f98af3f4`. The sealed `edgetwincal_msn2026_v1` code path, ledgers, results, artifacts, and packages are read-only evidence. Safe uses branch `lab/edgetwincal-safe`, namespace `edgetwincal_safe_v1`, and new directories only.
+
+## 1 Project-owned Safe tree
+
+- `code/configs/msn2026/safe_v1.json`: canonical targets, splits, model/training parameters, method grids, gates, and expected matrix.
+- `code/src/edgetwincal/safe_config.py`: strict config parsing, canonical JSON, config SHA256, and immutable dataclasses.
+- `code/src/edgetwincal/safe_data.py`: official downloads, SHA256 manifests, deterministic preprocessing, train-only normalization, physical pre-test/test shards, masked window datasets, and stable IDs.
+- `code/src/edgetwincal/robust.py`: weighted quantiles/MAD, group weights, Huber IRLS, block-penalty robust joint states, and fit audit.
+- `code/src/edgetwincal/safe.py`: bounded correction, deterministic validation split, candidate selection, validation-safety gate, exact fallback, and ablations.
+- `code/src/edgetwincal/safe_campaign.py`: pre-test training/cache/fitting, frozen ledger, once-only test opening, paired evaluation, and atomic manifests.
+- `code/src/edgetwincal/safe_aggregate.py`: seed rows, group cells, crossed bootstrap, Holm families, target decisions, and global gate.
+- `code/scripts/run_edgetwincal_safe.py`: subcommands `download`, `prepare-pretest`, `train`, `fit`, `freeze`, `test`, `aggregate`, `timing`, and `all`.
+- `code/tests/test_edgetwincal_safe_*.py`: data isolation, robust solver, envelope/gate, campaign, statistics, and end-to-end synthetic tests.
+- `data/edgetwincal_safe_v1/{raw,pretest,sealed_test}`: ignored private data; test shards are not loaded before a ledger token.
+- `results/edgetwincal_safe_v1`: ignored checkpoints, caches, raw logs, ledgers, and per-run predictions.
+- `artifacts/edgetwincal_safe_v1`: compact manifests, CSV/JSON statistics, decision, and plots.
+
+## 2 Frozen tensor and data contracts
+
+Each APN batch has `x`, `x_mark`, `y`, `y_mark`, `x_mask`, `y_mask`, `sample_id`, and `group_id`. History tensors are `[B,L,C]`, targets/masks `[B,H,C]`, and time markers use the existing APN encoding. Cached adapter splits use `features [N,C,D]`, `time_encoding [N,C,H,E]`, `base_prediction/target/mask [N,H,C]`, and pseudonymous int64 IDs `[N]`.
+
+`safe_data.py` exposes:
+
+```python
+download_official_dataset(root, dataset, expected_source) -> RawSourceManifest
+prepare_pretest_shards(root, spec, raw_manifest) -> PretestManifest
+fit_train_normalizer(pretest_train) -> NormalizerState
+build_pretest_loaders(spec, normalizer, seed) -> PretestLoaders
+freeze_test_ledger(root, dataset, provenance) -> TestLedger
+open_sealed_test_loader(root, spec, token, normalizer, seed) -> DataLoader
+```
+
+Download may hash the official raw object but pre-test preparation parses only rows before the test boundary. Test rows are written to a physically separate shard and are loadable only through a valid once-only token. The loader refuses overlapping target timestamps, group overlap, inconsistent channel order, non-train normalization, raw IDs in artifacts, or any output path outside the root.
+
+Beijing pivots official station CSVs to hourly PM2.5 channels in the fixed official station order. Intel parses the four-column MIT file, accepts mote IDs 1--54, converts date/time to UTC-naive source timestamps, and computes deterministic 5-minute medians. Neither path interpolates. Window inclusion is determined by target start time; history may cross only the preceding boundary, never a future split. Empty histories/targets remain masked.
+
+## 3 APN training and paired feature extraction
+
+`apn_training.train_apn_train_val` and `apn_bridge.extract_apn_batch` are reused without changing APN. A small Safe dataset factory supplies the custom masked loaders. Ten sequential trainings use seeds 2024--2028 for each dataset and save best validation checkpoints, curves, peak CUDA memory, wall-clock, argv, environment, split hash, normalizer hash, raw source hash, APN commit, and patch hash.
+
+The APN model configuration is fixed at history/forecast dimensions from the target spec, `d_model=24`, `npatch=12`, `te_dim=8`, dropout 0.1, batch 32, Adam at 0.01, 200 epochs, patience 10, and masked MSE. Every downstream variant receives the identical frozen checkpoint and cached rows. Checkpoint, split, mask, sample ID, group ID, and normalizer hashes must match before a paired manifest can complete.
+
+## 4 GRJF robust joint solver
+
+`robust.py` defines:
+
+```python
+group_balanced_weights(group_ids) -> Tensor
+weighted_quantile(values, weights, q) -> Tensor
+fit_group_huber_block_ridge(features, residual, groups, *,
+    latent_width, alpha_latent, alpha_cross, huber_delta,
+    max_iterations, tolerance, scale_floor, feature_clip) -> RobustCellState
+apply_robust_joint(state, latent, base_forecasts) -> Tensor
+fit_robust_joint_grid(train, val_select, grid, minimums) -> RobustJointAdapter
+```
+
+For each `(h,c)`, features contain the target latent followed by other-channel APN forecasts, with the diagonal structurally absent. Row weights are `N/(G*n_g)`. Feature centers/scales and residual scale are weighted median/MAD computed only from adapter-train. Slopes are penalized in two blocks; intercept is unpenalized. Float64 IRLS uses Huber delta 1.345, 25 iterations, tolerance `1e-8`, scale floor `1e-6`, and feature z clipping at 5. Any non-finite state, failed solve, non-convergence, fewer than 20 groups, or fewer than `max(100,4p)` rows produces a zero correction and explicit audit reason.
+
+Both alpha blocks use `{1,10,100,1000,10000,100000}`. Candidate ranking sees `val_select` only. Ordinary Joint and original Full use their existing frozen implementations and grids; parity tests ensure this new namespace does not change them.
+
+## 5 BVSE candidate and dataset gate
+
+`safe.py` defines:
+
+```python
+split_validation_groups(split, descriptor, salt) -> (select, safety, audit)
+apply_bounded_correction(base, raw, scale, kappa, shrinkage) -> Tensor
+select_safe_candidate(train, val_select, fixed_grid) -> SafeCandidate
+decide_dataset_safety_gate(candidates_by_seed, val_safety_by_seed, gate_spec)
+    -> SafetyGateDecision
+apply_gated_safe(candidate, base, features, *, enabled) -> Tensor
+```
+
+The envelope is `base + lambda*clip(raw_correction, -kappa*s_r, +kappa*s_r)`. It acts on the final combined correction. Grids are `kappa={0.25,0.5,1,2}` and `lambda={0.25,0.5,0.75,1}`. A disabled gate executes `base.clone()` before any candidate arithmetic and records candidate metrics separately.
+
+`val_select` feasibility requires pointwise non-worse APN micro MSE, group-macro MSE, and micro MAE; nonnegative leave-one-group-out macro gain; positive-gain concentration at most 0.25; and Joint macro-MSE relative loss at most 0.5%. The deterministic tie order is lower minimax relative loss, lower lambda, lower kappa, then stronger penalties.
+
+The dataset gate pools five checkpoints on untouched `val_safety` and runs 10,000 crossed group-by-checkpoint draws with seed 20260721. It requires at least 20 groups and 400 target cells; APN MSE/MAE point non-degradation; one-sided 95% harm UCB at most 1%; Joint macro-MSE harm UCB at most 0.5%; at least 4/5 checkpoint MSE gains; nonnegative leave-one-group-out gain; and concentration at most 0.25. Gate failure disables all five Safe deployments. No gate field accepts test tensors or a test token.
+
+Ablation semantics are fixed: `SafeNoBalance` changes only group weights to observation weights; `SafeNoRobust` changes only Huber loss to squared ridge; `SafeNoBound` applies the robust raw correction with `kappa=infinity, lambda=1`; `SafeNoGate` deploys the selected bounded candidate even if the dataset gate rejects it.
+
+## 6 Campaign state machine
+
+```text
+downloaded
+  -> pretest_prepared
+  -> ten_apn_checkpoints_complete
+  -> four_main_plus_four_ablation_states_fitted
+  -> five_seed_validation_gate_frozen
+  -> test_ledger_frozen
+  -> test_opened_once
+  -> all_80_variant_seed_manifests_complete
+  -> test_closed_and_sealed
+  -> statistics_complete
+  -> PASS -> CPU/real-Jetson timing -> final verdict
+            or ABANDON/BLOCKED
+```
+
+The pre-test commands monkeypatch the test reader to fail. `freeze` rejects missing seeds, differing identities/hashes, incomplete candidate surfaces, or unfrozen gate decisions. `test` opens each dataset shard once in memory, evaluates all variants in fixed order, saves predictions/targets/masks/IDs privately, emits group cells and compact manifests, then closes and seals the ledger. A failed run is retained and cannot be silently replaced.
+
+Expected main registry order is `APN,Joint,Full,Safe`; ablations follow. There are 10 training manifests and 80 evaluation manifests (`2 datasets x 5 seeds x 8 variants`). GPU work is sequential.
+
+## 7 Statistics and decisions
+
+`safe_aggregate.py` requires the complete matrix and computes pooled MSE/MAE, per-seed rows, group-cell tables, 50,000 shared crossed group-by-checkpoint bootstrap draws with seed 20260721, percentile 95% CIs, one-sided paired p-values, and Holm-adjusted decisions. Primary family is Safe versus APN across targets; secondary family contains Safe versus Joint, Full, and each ablation.
+
+A target is positive only with an enabled gate, positive pooled APN MSE gain, CI lower bound above zero, Holm one-sided `p<0.05`, at least four seed gains, and MSE/MAE harm UCB at most 1%. Global `PASS` requires both targets positive, every target and seed MSE/MAE degradation at most 1%, Safe-versus-Joint 0.1% MSE non-inferiority by point and CI, ablation support, and complete provenance. Otherwise the decision is `ABANDON`; no thresholds, modules, datasets, or baseline change. Device timing is unreachable before PASS. Lack of a real Jetson after efficacy PASS is `BLOCKED`, never simulated.
+
+## 8 Required tests before data execution
+
+- Root-boundary, forbidden-path, train-only normalization, time split, group-disjoint validation, deterministic IDs, input reorder, and token-gated test-reader tests.
+- Group duplication invariance, outlier robustness, weighted MAD, constant/empty/single-row cells, finite gradients/solves, non-convergence, and zero-cell fallback tests.
+- Strict correction cap, zero cap, bitwise disabled-gate APN parity, candidate tie order, stable five-seed gate pass, anomalous-seed rejection, insufficient-group rejection, and raw candidate retention.
+- Existing Full and Joint parity, four-main registry order, identical checkpoint/split/normalizer hashes, pre-test execution with a crashing test reader, once-only test open, completeness rejection, paired statistics, and timing-unreachable-before-PASS tests.
+- A tiny synthetic end-to-end campaign runs all four methods and four ablations without network or GPU.
+
+## 9 Implementation and execution order
+
+1. Add config/data schemas and unit tests; download/hash official sources only after those pass.
+2. Prepare pre-test shards and audit counts without reading either test shard.
+3. Implement/test robust solver and envelope/gate; verify Joint/Full parity.
+4. Run two-dataset train/validation smoke and 100-step timings, then all ten APN trainings sequentially.
+5. Fit all adapters, freeze five-seed validation decisions, and validate ledgers.
+6. If the pre-test state is complete, open each test once and evaluate all main/ablation states.
+7. Aggregate without tuning. On efficacy failure write `ABANDON`; on PASS only, measure real CPU and Jetson latency/memory and apply the device gate.
+
+## 10 Safe How to Run contract
+
+The implemented CLI must make these commands valid from the workspace root, using the existing project-local interpreter and `PYTHONPATH`. It must never set HOME or CODEX_HOME.
+
+```powershell
+$edgeTwinPython = (Resolve-Path ''.\.conda\envs\evipatch\python.exe'').Path
+$env:PYTHONPATH = (Resolve-Path ''.\code\src'').Path
+
+& $edgeTwinPython .\code\scripts\run_edgetwincal_safe.py download
+& $edgeTwinPython .\code\scripts\run_edgetwincal_safe.py prepare-pretest
+& $edgeTwinPython .\code\scripts\run_edgetwincal_safe.py smoke
+& $edgeTwinPython .\code\scripts\run_edgetwincal_safe.py all --through aggregate
+# timing is allowed only when aggregate records PASS:
+& $edgeTwinPython .\code\scripts\run_edgetwincal_safe.py timing --device cpu
+& $edgeTwinPython .\code\scripts\run_edgetwincal_safe.py timing --device jetson
+```
+
+## Sealed `msn2026_v1` implementation reference
+
+The sections below describe the earlier sealed campaign and remain for provenance; they are not the active Safe implementation specification.
 
 ## 1 Scope and invariants
 
